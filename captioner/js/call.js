@@ -32,6 +32,8 @@ export async function joinCall() {
     const alias = $("alias").value.trim();
     const name = $("name").value.trim() || "Captions Bot";
     const mode = $("mode").value;
+    const pin = $("pin").value.trim();
+
 
     if (!node || !alias) {
         alert("Please enter Node and Conference alias.");
@@ -110,7 +112,29 @@ export async function joinCall() {
         }
     };
 
-    rtc.onSetup = () => rtc.connect();
+    rtc.onSetup = (_stream, pin_status /*, conference_extension, idp_selection */) => {
+        // pin_status is one of: "none" | "required" | "optional" :contentReference[oaicite:1]{index=1}
+
+        let pinToUse;
+
+        if (pin_status === "required") {
+            if (!pin) {
+                alert("This conference requires a PIN. Please enter it and try again.");
+                // Don't call connect() yet — user needs to enter the PIN
+                return;
+            }
+            pinToUse = pin;
+        } else if (pin_status === "optional") {
+            // Hosts need a PIN; Guests may enter with empty string ("") :contentReference[oaicite:2]{index=2}
+            pinToUse = pin || "";
+        } else {
+            // "none" => must be undefined :contentReference[oaicite:3]{index=3}
+            pinToUse = undefined;
+        }
+
+        rtc.connect(pinToUse);
+    };
+
 
     rtc.onConnect = (remoteStream) => {
         if (remoteStream) $("remote").srcObject = remoteStream;

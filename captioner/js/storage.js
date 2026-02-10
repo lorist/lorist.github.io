@@ -8,6 +8,7 @@ export function saveFormState() {
         alias: $("alias").value.trim(),
         name: $("name").value.trim(),
         mode: $("mode").value,
+        pin: $("pin").value.trim(),
         startMuted: $("startMuted").checked,
         startCamOff: $("startCamOff").checked,
     };
@@ -31,6 +32,7 @@ export function loadFormState() {
         if (state.alias) $("alias").value = state.alias;
         if (state.name) $("name").value = state.name;
         if (state.mode) $("mode").value = state.mode;
+        if (state.pin) $("pin").value = state.pin;
 
         $("startMuted").checked = !!state.startMuted;
         $("startCamOff").checked = !!state.startCamOff;
@@ -40,7 +42,7 @@ export function loadFormState() {
 }
 
 export function wireFormAutoSave() {
-    ["node", "alias", "name", "mode", "startMuted", "startCamOff"].forEach((id) => {
+    ["node", "alias", "pin", "name", "mode", "startMuted", "startCamOff"].forEach((id) => {
         const el = $(id);
         if (!el) return;
         el.addEventListener("input", saveFormState);
