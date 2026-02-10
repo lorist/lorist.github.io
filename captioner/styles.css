@@ -1,0 +1,446 @@
+/* ---------------------------------------
+  “Starter-app-like” styling (single-file)
+  - App shell with header
+  - Card panels
+  - Consistent spacing + controls
+  - Light theme (like tutorial screenshots)
+---------------------------------------- */
+
+:root {
+    --bg: #f6f7fb;
+    --card: #ffffff;
+    --text: #0f172a;
+    /* slate-900 */
+    --muted: #64748b;
+    /* slate-500 */
+    --line: #e2e8f0;
+    /* slate-200 */
+    --line2: #eef2f7;
+    --brand: #2563eb;
+    /* blue-600 */
+    --brand2: #1d4ed8;
+    /* blue-700 */
+    --danger: #dc2626;
+    /* red-600 */
+    --good: #16a34a;
+    /* green-600 */
+    --shadow: 0 10px 20px rgba(2, 6, 23, .06);
+    --r: 14px;
+    --r2: 10px;
+    --pad: 14px;
+    --gap: 12px;
+    --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: var(--font);
+    color: var(--text);
+    background:
+        radial-gradient(1200px 600px at 40% -200px, #dbeafe 0%, rgba(219, 234, 254, 0) 60%),
+        radial-gradient(900px 500px at 120% -100px, #e0e7ff 0%, rgba(224, 231, 255, 0) 60%),
+        var(--bg);
+}
+
+a {
+    color: var(--brand);
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* App shell */
+.app {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 18px;
+}
+
+.topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 16px;
+    border: 1px solid var(--line);
+    border-radius: var(--r);
+    background: rgba(255, 255, 255, .75);
+    backdrop-filter: blur(8px);
+    box-shadow: var(--shadow);
+}
+
+.brand {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.brand h1 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 750;
+    letter-spacing: .2px;
+}
+
+.brand .sub {
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: #fff;
+    font-size: 12px;
+    color: var(--muted);
+    white-space: nowrap;
+}
+
+.dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: #cbd5e1;
+}
+
+.dot.connected {
+    background: var(--good);
+}
+
+.dot.connecting {
+    background: #f59e0b;
+}
+
+.dot.error {
+    background: var(--danger);
+}
+
+/* Layout */
+.grid {
+    margin-top: 14px;
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    gap: 14px;
+    align-items: start;
+}
+
+@media (max-width: 1020px) {
+    .grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Cards */
+.card {
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, .9);
+    border-radius: var(--r);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+}
+
+/* Replacement for inline style="box-shadow:none;" */
+.card.cardFlat {
+    box-shadow: none;
+}
+
+.cardHeader {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--line2);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.cardHeader .title {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.cardHeader .title strong {
+    font-size: 13px;
+}
+
+.cardHeader .title span {
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.cardBody {
+    padding: 14px;
+}
+
+/* Forms */
+.row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: end;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.field label {
+    font-size: 12px;
+    color: var(--muted);
+}
+
+input,
+select,
+textarea,
+button {
+    font: inherit;
+}
+
+input,
+select,
+textarea {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #fff;
+    padding: 10px 10px;
+    outline: none;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    border-color: rgba(37, 99, 235, .55);
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, .14);
+}
+
+/* Buttons */
+.btn {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #fff;
+    padding: 10px 12px;
+    cursor: pointer;
+    font-weight: 650;
+    font-size: 13px;
+    transition: transform .03s ease, background .15s ease, border-color .15s ease;
+    user-select: none;
+}
+
+.btn:hover {
+    background: #f8fafc;
+}
+
+.btn:active {
+    transform: translateY(1px);
+}
+
+.btn.primary {
+    background: var(--brand);
+    border-color: rgba(29, 78, 216, .35);
+    color: #fff;
+}
+
+.btn.primary:hover {
+    background: var(--brand2);
+}
+
+.btn.danger {
+    background: #fff5f5;
+    border-color: rgba(220, 38, 38, .25);
+    color: var(--danger);
+}
+
+.btn.ghost {
+    background: transparent;
+}
+
+.btn:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled {
+    opacity: .55;
+    cursor: not-allowed;
+}
+
+.pill {
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+    padding: 9px 10px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: #fff;
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.pill input {
+    margin: 0;
+}
+
+.toolbar {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.toolbar .left,
+.toolbar .right {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+/* Videos */
+.videos {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 12px;
+}
+
+@media (max-width: 860px) {
+    .videos {
+        grid-template-columns: 1fr;
+    }
+}
+
+.videoCard {
+    border: 1px solid var(--line);
+    border-radius: var(--r);
+    overflow: hidden;
+    background: #0b1220;
+    position: relative;
+    min-height: 220px;
+}
+
+.videoCard .label {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .10);
+    border: 1px solid rgba(255, 255, 255, .16);
+    color: rgba(255, 255, 255, .85);
+    font-size: 12px;
+    backdrop-filter: blur(6px);
+}
+
+video {
+    width: 100%;
+    height: 100%;
+    display: block;
+    background: #000;
+    object-fit: contain;
+}
+
+/* Transcript */
+textarea {
+    width: 100%;
+    min-height: 240px;
+    resize: vertical;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 12px;
+    line-height: 1.4;
+    background: #fff;
+}
+
+/* Roster */
+.rosterBody {
+    max-height: 72vh;
+    overflow: auto;
+    padding: 12px 14px;
+}
+
+.rosterItem {
+    border: 1px solid var(--line2);
+    border-radius: 12px;
+    padding: 10px 12px;
+    background: #fff;
+    margin-bottom: 10px;
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.rosterTop {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+.rosterName {
+    font-weight: 700;
+    font-size: 13px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.rosterBadge {
+    font-size: 12px;
+    color: var(--muted);
+    padding: 4px 9px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: #fff;
+    white-space: nowrap;
+}
+
+.rosterSub {
+    margin-top: 6px;
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.kv {
+    font-size: 11px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    border: 1px solid var(--line2);
+    background: #f8fafc;
+    color: #334155;
+}
+
+.activeSpeaker {
+    border-color: rgba(37, 99, 235, .35);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .10) inset;
+}
+
+.activeSpeaker .rosterBadge {
+    border-color: rgba(37, 99, 235, .35);
+    background: rgba(37, 99, 235, .08);
+    color: #1d4ed8;
+    font-weight: 700;
+}
+
+/* Small helper text */
+.muted {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.spacer {
+    height: 10px;
+}
+
+.statusline {
+    font-size: 12px;
+    color: var(--muted);
+}

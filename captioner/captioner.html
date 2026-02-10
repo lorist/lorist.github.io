@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pexip Captions Capture (PexRTC v39)</title>
+
+    <link rel="stylesheet" href="./styles.css" />
+</head>
+
+<body>
+    <div class="app">
+        <div class="topbar">
+            <div class="brand">
+                <h1>Pexip Captions Capture</h1>
+                <div class="sub">PexRTC utility • roster + live captions export</div>
+            </div>
+            <div class="badge" title="Connection status">
+                <span id="connDot" class="dot"></span>
+                <span id="connText">Disconnected</span>
+            </div>
+        </div>
+
+        <div class="grid">
+            <!-- LEFT: Roster -->
+            <div class="card">
+                <div class="cardHeader">
+                    <div class="title">
+                        <strong>Roster</strong>
+                        <span id="rosterMeta">Not connected</span>
+                    </div>
+                    <button id="refreshRoster" class="btn" disabled>Refresh</button>
+                </div>
+                <div class="rosterBody" id="rosterList">
+                    <div class="muted">Join a conference to see participants.</div>
+                </div>
+            </div>
+
+            <!-- RIGHT: Main -->
+            <div class="card">
+                <div class="cardHeader">
+                    <div class="title">
+                        <strong>Session</strong>
+                        <span id="status" class="statusline"></span>
+                    </div>
+                    <div class="muted">PexRTC v39 (your node)</div>
+                </div>
+
+                <div class="cardBody">
+
+                    <!-- Join -->
+                    <div class="card cardFlat">
+                        <div class="cardHeader">
+                            <div class="title">
+                                <strong>Join a conference</strong>
+                                <span>Enter node + alias, then join</span>
+                            </div>
+                        </div>
+                        <div class="cardBody">
+                            <div class="row">
+                                <div class="field">
+                                    <label for="node">Node</label>
+                                    <input id="node" size="28" placeholder="conf.example.com" />
+                                </div>
+                                <div class="field">
+                                    <label for="alias">Conference alias</label>
+                                    <input id="alias" size="20" placeholder="meet" />
+                                </div>
+                                <div class="field">
+                                    <label for="name">Name</label>
+                                    <input id="name" size="14" placeholder="Captions Bot" />
+                                </div>
+
+                                <div class="field">
+                                    <label for="mode">Connect mode</label>
+                                    <select id="mode">
+                                        <option value="video">Audio + Video</option>
+                                        <option value="audioonly">Audio only</option>
+                                        <option value="recvonly">Receive-only</option>
+                                        <option value="none">Roster-only</option>
+                                    </select>
+                                </div>
+
+                                <label class="pill" title="Start with mic muted">
+                                    <input id="startMuted" type="checkbox" />
+                                    Start mic muted
+                                </label>
+
+                                <label class="pill" title="Start with camera muted">
+                                    <input id="startCamOff" type="checkbox" />
+                                    Start camera off
+                                </label>
+
+                                <button id="join" class="btn primary">Join</button>
+                                <button id="leave" class="btn danger" disabled>Leave</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="spacer"></div>
+
+                    <!-- In-call controls -->
+                    <div class="card cardFlat">
+                        <div class="cardHeader">
+                            <div class="title">
+                                <strong>In-call controls</strong>
+                                <span id="mediaState" class="muted"></span>
+                            </div>
+                        </div>
+                        <div class="cardBody">
+                            <div class="toolbar">
+                                <div class="left">
+                                    <button id="toggleMic" class="btn" disabled>Mute mic</button>
+                                    <button id="toggleCam" class="btn" disabled>Mute camera</button>
+                                    <button id="toggleShare" class="btn" disabled>Start share</button>
+                                </div>
+                                <div class="right">
+                                    <span class="muted">Tip: Use Receive-only for captioner bot.</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="spacer"></div>
+
+                    <!-- Captions + export -->
+                    <div class="card cardFlat">
+                        <div class="cardHeader">
+                            <div class="title">
+                                <strong>Captions</strong>
+                                <span>Enable/disable, then export the transcript</span>
+                            </div>
+                        </div>
+                        <div class="cardBody">
+                            <div class="row">
+                                <button id="captionsOn" class="btn primary" disabled>Enable captions</button>
+                                <button id="captionsOff" class="btn" disabled>Disable captions</button>
+
+                                <select id="downloadFormat" disabled>
+                                    <option value="txt">TXT</option>
+                                    <option value="srt">SRT</option>
+                                    <option value="json">JSON</option>
+                                    <option value="csv">CSV</option>
+                                </select>
+                                <button id="download" class="btn" disabled>Download</button>
+
+                                <button id="clear" class="btn ghost" disabled>Clear buffer</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Videos -->
+                    <div class="videos">
+                        <div class="videoCard">
+                            <div class="label">Remote</div>
+                            <video id="remote" playsinline autoplay controls></video>
+                        </div>
+                        <div class="videoCard">
+                            <div class="label">Presentation</div>
+                            <video id="presentation" playsinline autoplay controls></video>
+                        </div>
+                    </div>
+
+                    <div class="spacer"></div>
+
+                    <!-- Transcript -->
+                    <div class="card cardFlat">
+                        <div class="cardHeader">
+                            <div class="title">
+                                <strong>Transcript (final captions)</strong>
+                                <span class="muted">Exports use the buffered final captions</span>
+                            </div>
+                        </div>
+                        <div class="cardBody">
+                            <textarea id="out" readonly></textarea>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ES Modules -->
+    <script type="module" src="./js/main.js"></script>
+</body>
+
+</html>
