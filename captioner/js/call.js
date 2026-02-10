@@ -139,22 +139,44 @@ export async function joinCall() {
     rtc.onConnect = (remoteStream) => {
         if (remoteStream) $("remote").srcObject = remoteStream;
 
-        const hasMedia = (mode !== "none");
+        // Local *send* capability (controls)
+        const hasLocalSendMedia = (mode === "full" || mode === "audio");
+        const canShare = (mode === "full" || mode === "presentation"); // adjust if you want
+
+        // Start state from UI
         state.micMuted = !!$("startMuted").checked;
         state.camMuted = !!$("startCamOff").checked;
 
-        if (hasMedia) {
-            rtc.muteAudio(state.micMuted);
-            rtc.muteVideo(state.camMuted);
+        // Force receive-only to never send media
+        if (mode === "recvonly") {
+            state.micMuted = true;
+            state.camMuted = true;
         }
 
-        setConnectedUI(true, hasMedia);
+        // Apply local mutes only when we have local send media
+        if (hasLocalSendMedia) {
+            rtc.muteAudio(state.micMuted);
+            rtc.muteVideo(state.camMuted);
+        } else {
+            // Make extra sure we never send
+            rtc.muteAudio(true);
+            rtc.muteVideo(true);
+        }
+
+        // IMPORTANT: keep setConnectedUI semantics = "enable local controls?"
+        setConnectedUI(true, hasLocalSendMedia);
+
+        // If you want share enabled for presentation/full, tweak UI separately:
+        // Example (optional):
+        $("toggleShare").disabled = !canShare;
+
         updateMediaUI();
         renderRoster();
 
         status(`Connected (uuid=${rtc.uuid})`);
         setConnBadge("connected", "Connected");
     };
+
 
     rtc.onDisconnect = (reason) => {
         const msg = `Disconnected${reason ? ": " + reason : ""}`;
@@ -185,10 +207,16 @@ export async function joinCall() {
     rtc.onScreenshareStopped = () => { state.sharing = false; updateMediaUI(); };
 
     const callType =
-        mode === "audioonly" ? "audioonly" :
-            mode === "recvonly" ? "recvonly" :
-                mode === "none" ? "none" :
-                    null;
+        mode === "full"
+            ? "AudioSendRecvVideoSendRecvPresentationSendRecv"
+            : mode === "audio"
+                ? "AudioSendRecvPresentationSendRecv"
+                : mode === "presentation"
+                    ? "PresentationSendRecv"
+                    : mode === "recvonly"
+                        ? "AudioRecvVideoRecvPresentationRecv"
+                        : "none";
+
 
     status("Connecting…");
     setConnBadge("connecting", "Connecting…");
