@@ -1,25 +1,38 @@
 [
     {
-        "title": "Middleware README",
-        "path": "middleware/",
-        "description": "Docs and setup for the middleware service.",
+        "title": "PexRTC caption downloader",
+        "path": "captioner/",
+        "description": "Example webapp to download AIMS captions.",
         "tags": [
             "docs",
-            "backend"
+            "frontend",
+            "pexrtc"
         ],
         "updated": "2026-02-12",
-        "badge": "Docs"
+        "badge": "Frontend"
     },
     {
-        "title": "Pexip Plugin",
-        "path": "plugin/",
-        "description": "Dialout picker plugin pages and examples.",
+        "title": "Pexip Genesys Plugin",
+        "path": "genesys/",
+        "description": "Genesys code and exmaple.",
         "tags": [
             "pexip",
-            "plugin",
+            "genesys",
             "js"
         ],
         "updated": "2026-02-12",
-        "badge": "UI"
+        "badge": "Backend"
+    },
+    {
+        "title": "PexRTC send second camera example",
+        "path": "genesys/",
+        "description": "Send second camera as second stream",
+        "tags": [
+            "pexip",
+            "pexrtc",
+            "js"
+        ],
+        "updated": "2026-02-12",
+        "badge": "Frontend"
     }
 ]
