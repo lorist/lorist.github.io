@@ -12,18 +12,6 @@
         "badge": "Frontend"
     },
     {
-        "title": "Pexip Genesys Plugin",
-        "path": "genesys/",
-        "description": "Genesys code and exmaple.",
-        "tags": [
-            "pexip",
-            "genesys",
-            "js"
-        ],
-        "updated": "2026-02-12",
-        "badge": "Backend"
-    },
-    {
         "title": "PexRTC send second camera example",
         "path": "second-camera-pexrtc/",
         "description": "Send second camera as second stream",
