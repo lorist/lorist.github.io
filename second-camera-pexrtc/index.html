@@ -1,0 +1,629 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PexRTC v39 – Second Camera as Presentation (with device selection)</title>
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            margin: 16px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 360px 1fr;
+            gap: 14px;
+            align-items: start;
+        }
+
+        @media (max-width: 980px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        fieldset {
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 10px 12px;
+        }
+
+        legend {
+            padding: 0 6px;
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            opacity: .8;
+            margin-top: 8px;
+        }
+
+        input,
+        select,
+        button {
+            width: 100%;
+            padding: 8px;
+            margin-top: 6px;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        .row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .row>* {
+            flex: 1;
+        }
+
+        video {
+            width: 100%;
+            background: #000;
+            border-radius: 10px;
+        }
+
+        .stack {
+            display: grid;
+            gap: 10px;
+        }
+
+        pre {
+            background: #0b1020;
+            color: #e6e6e6;
+            padding: 10px;
+            border-radius: 10px;
+            overflow: auto;
+        }
+
+        .small {
+            font-size: 12px;
+            opacity: .75;
+            line-height: 1.4;
+        }
+
+        .hint {
+            font-size: 12px;
+            opacity: .75;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>PexRTC v39: device-selected main camera + second camera as “presentation/content”</h2>
+
+    <div class="grid">
+        <fieldset>
+            <legend>Join</legend>
+
+            <label>Conferencing Node</label>
+            <input id="node" placeholder="internal.lorist.org  (or https://internal.lorist.org)" />
+
+            <label>VMR alias</label>
+            <input id="alias" placeholder="test  (or test@yourdomain)" />
+
+            <label>Display name</label>
+            <input id="name" value="SecondCam Tester" />
+
+            <label>Outbound bandwidth (kbps)</label>
+            <input id="bw" type="number" value="4096" />
+
+            <label>Main camera device</label>
+            <select id="camMain" disabled></select>
+
+            <label>Main camera resolution</label>
+            <select id="mainRes" disabled>
+                <option value="1280x720">1280×720</option>
+                <option value="1920x1080" selected>1920×1080</option>
+            </select>
+
+            <label>Main camera FPS</label>
+            <select id="mainFps" disabled>
+                <option value="15">15</option>
+                <option value="30" selected>30</option>
+                <option value="60">60</option>
+            </select>
+
+            <label>Microphone device</label>
+            <select id="micIn" disabled></select>
+            
+            <div class="row" style="margin-top:10px;">
+                <button id="toggleMute" disabled>Mute mic</button>
+                <button id="refreshDevices" disabled>Refresh devices</button>
+            </div>
+
+            <div class="row" style="margin-top:10px;">
+                <button id="loadLib">Load pexrtc.js</button>
+                <button id="join" disabled>Join</button>
+            </div>
+
+            <button id="leave" disabled style="margin-top:10px;">Leave</button>
+
+            <p class="hint">
+                If you paste a full URL into “Conferencing Node”, this page will sanitize it to avoid the
+                <code>https://https://…</code> bug.
+            </p>
+
+            <hr style="margin:14px 0; border:none; border-top:1px solid #eee;" />
+
+            <legend>Second camera → Presentation</legend>
+
+            <label>Second camera device</label>
+            <select id="cam2" disabled></select>
+
+            <label>Target resolution</label>
+            <select id="res" disabled>
+                <option value="1280x720">1280×720</option>
+                <option value="1920x1080" selected>1920×1080</option>
+                <option value="2560x1440">2560×1440</option>
+            </select>
+
+            <label>Target FPS</label>
+            <select id="fps" disabled>
+                <option value="15">15</option>
+                <option value="30" selected>30</option>
+                <option value="60">60</option>
+            </select>
+
+            <div class="row" style="margin-top:10px;">
+                <button id="start2" disabled>Start 2nd cam as presentation</button>
+                <button id="stop2" disabled>Stop presentation</button>
+            </div>
+
+            <p class="small">
+                Tip: if 1080p/60 fails, try 1080p/30 or 720p/60. Actual send quality is capped by device,
+                browser, bandwidth, and platform policy.
+            </p>
+        </fieldset>
+
+        <div class="stack">
+            <fieldset>
+                <legend>Remote main video</legend>
+                <video id="remote" autoplay playsinline></video>
+            </fieldset>
+
+            <fieldset>
+                <legend>Remote presentation (content)</legend>
+                <video id="remotePres" autoplay playsinline></video>
+            </fieldset>
+
+            <fieldset>
+                <legend>Local preview (2nd camera)</legend>
+                <video id="local2" autoplay playsinline muted></video>
+            </fieldset>
+
+            <fieldset>
+                <legend>Log</legend>
+                <pre id="log"></pre>
+            </fieldset>
+        </div>
+    </div>
+
+    <script>
+        (() => {
+            const $ = (id) => document.getElementById(id);
+            const logEl = $("log");
+            const log = (...args) => {
+                const msg = args.map(a => typeof a === "string" ? a : JSON.stringify(a, null, 2)).join(" ");
+                console.log(msg);
+                logEl.textContent += msg + "\n";
+                logEl.scrollTop = logEl.scrollHeight;
+            };
+
+            let pexrtc = null;
+            let connected = false;
+
+            let mainStream = null;
+            let secondCamStream = null;
+
+            let micMuted = false;
+
+            /**
+             * ------------------------------------------------------
+             * Node parsing (avoid double https://)
+             * - Use node.base for loading pexrtc.js
+             * - Use node.host for pexrtc.makeCall(...)
+             * ------------------------------------------------------
+             */
+            function parseNode(raw) {
+                let host = (raw || "").trim();
+                host = host.replace(/\s+/g, "").replace(/\/+$/, "");
+                host = host.replace(/^(https?:\/\/)+/i, ""); // strip any scheme(s)
+                return {
+                    host,                    // internal.lorist.org
+                    base: "https://" + host  // https://internal.lorist.org
+                };
+            }
+
+            function setJoinControlsEnabled(enabled) {
+                $("join").disabled = !enabled;
+                $("camMain").disabled = !enabled;
+                $("mainRes").disabled = !enabled;
+                $("mainFps").disabled = !enabled;
+                $("micIn").disabled = !enabled;
+
+                if ($("refreshDevices")) $("refreshDevices").disabled = !enabled;
+            }
+
+            function enableSecondCamControls(enabled) {
+                ["cam2", "res", "fps", "start2", "stop2"].forEach(id => $(id).disabled = !enabled);
+            }
+
+            function buildVideoConstraints(deviceId, resValue, fpsValue) {
+                const [w, h] = resValue.split("x").map(n => parseInt(n, 10));
+                const fps = parseInt(fpsValue, 10);
+                return {
+                    deviceId: deviceId ? { exact: deviceId } : undefined,
+                    width: { ideal: w, max: w },
+                    height: { ideal: h, max: h },
+                    frameRate: { ideal: fps, max: fps }
+                };
+            }
+
+            function buildAudioConstraints(deviceId) {
+                return deviceId ? { deviceId: { exact: deviceId } } : true;
+            }
+
+            async function enumerateDevicesAll() {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const cams = devices.filter(d => d.kind === "videoinput");
+                const mics = devices.filter(d => d.kind === "audioinput");
+
+                const fill = (selId, list, defaultLabel) => {
+                    const sel = $(selId);
+                    sel.innerHTML = "";
+                    list.forEach((d, i) => {
+                        const opt = document.createElement("option");
+                        opt.value = d.deviceId;
+                        opt.textContent = d.label || `${defaultLabel} ${i + 1}`;
+                        sel.appendChild(opt);
+                    });
+                    sel.disabled = list.length === 0;
+                };
+
+                fill("camMain", cams, "Camera");
+                fill("cam2", cams, "Camera");
+                fill("micIn", mics, "Microphone");
+
+                $("mainRes").disabled = cams.length === 0;
+                $("mainFps").disabled = cams.length === 0;
+
+                log(`Found ${cams.length} cameras, ${mics.length} microphones`);
+            }
+
+            async function logDeviceDiagnostics() {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const vids = devices.filter(d => d.kind === "videoinput");
+                const auds = devices.filter(d => d.kind === "audioinput");
+
+                log("All devices:", devices.map(d => ({
+                    kind: d.kind,
+                    label: d.label,
+                    id: d.deviceId,
+                    groupId: d.groupId
+                })));
+
+                log("Video inputs:", vids.map(d => ({ label: d.label, id: d.deviceId, groupId: d.groupId })));
+                log("Audio inputs:", auds.map(d => ({ label: d.label, id: d.deviceId, groupId: d.groupId })));
+
+                log("secureContext:", window.isSecureContext, "protocol:", location.protocol);
+            }
+
+            async function primeDevicePermissions() {
+                // Helps device labels appear in enumerateDevices
+                try {
+                    const s = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                    s.getTracks().forEach(t => t.stop());
+                } catch (e) {
+                    log("Permission prime failed (non-fatal):", e);
+                }
+            }
+
+            async function stopStream(stream) {
+                if (!stream) return;
+                stream.getTracks().forEach(t => {
+                    try { t.stop(); } catch { }
+                });
+            }
+
+            function setMicMuted(muted) {
+                micMuted = muted;
+
+                if (mainStream) {
+                    const tracks = mainStream.getAudioTracks();
+                    tracks.forEach(t => { t.enabled = !muted; });
+                }
+
+                if ($("toggleMute")) {
+                    $("toggleMute").textContent = muted ? "Unmute mic" : "Mute mic";
+                    $("toggleMute").disabled = false;
+                }
+
+                log(muted ? "Mic muted" : "Mic unmuted");
+            }
+
+            // Device hot-plug refresh
+            if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) {
+                navigator.mediaDevices.addEventListener("devicechange", async () => {
+                    log("devicechange detected — refreshing device list");
+                    try { await enumerateDevicesAll(); } catch (e) { log("devicechange refresh failed:", e); }
+                });
+            }
+
+            // UI wiring: mute + refresh (if buttons exist in HTML)
+            if ($("toggleMute")) $("toggleMute").onclick = () => setMicMuted(!micMuted);
+
+            if ($("refreshDevices")) {
+                $("refreshDevices").onclick = async () => {
+                    await primeDevicePermissions();
+                    await enumerateDevicesAll();
+                    await logDeviceDiagnostics();
+                };
+            }
+
+            // Optional: hot-swap microphone while connected (replaces audio track in mainStream)
+            if ($("micIn")) {
+                $("micIn").onchange = async () => {
+                    if (!mainStream) return;
+
+                    const newMicId = $("micIn").value;
+                    log("Switching microphone to:", newMicId || "(default)");
+
+                    const s = await navigator.mediaDevices.getUserMedia({ audio: buildAudioConstraints(newMicId), video: false });
+                    const newTrack = s.getAudioTracks()[0];
+
+                    const oldTracks = mainStream.getAudioTracks();
+                    oldTracks.forEach(t => {
+                        try { mainStream.removeTrack(t); } catch { }
+                        try { t.stop(); } catch { }
+                    });
+
+                    newTrack.enabled = !micMuted;
+                    mainStream.addTrack(newTrack);
+
+                    log("Microphone track replaced in mainStream");
+                };
+            }
+
+            /**
+             * ------------------------------------------------------
+             * Load pexrtc.js
+             * ------------------------------------------------------
+             */
+            $("loadLib").onclick = async () => {
+                const raw = $("node").value;
+                if (!raw.trim()) return log("Enter node base host first (e.g. internal.lorist.org).");
+
+                const node = parseNode(raw);
+                const src = `${node.base}/static/webrtc/js/pexrtc.js`;
+                log("Loading:", src);
+
+                await new Promise((resolve, reject) => {
+                    const s = document.createElement("script");
+                    s.src = src;
+                    s.onload = resolve;
+                    s.onerror = reject;
+                    document.head.appendChild(s);
+                });
+
+                log("pexrtc.js loaded");
+                setJoinControlsEnabled(true);
+
+                await primeDevicePermissions();
+                await enumerateDevicesAll();
+                await logDeviceDiagnostics();
+
+                if ($("refreshDevices")) $("refreshDevices").disabled = false;
+            };
+
+            /**
+             * ------------------------------------------------------
+             * Join call (assume always a VIDEO call)
+             * ------------------------------------------------------
+             */
+            $("join").onclick = async () => {
+                if (typeof PexRTC !== "function") return log("pexrtc.js not loaded.");
+
+                const node = parseNode($("node").value);
+                const alias = $("alias").value.trim();
+                const name = $("name").value.trim() || "Web User";
+                const bw = parseInt($("bw").value, 10) || 2048;
+
+                if (!alias) return log("VMR alias required.");
+
+                connected = false;
+                enableSecondCamControls(false);
+
+                // Acquire selected MAIN camera + selected microphone before joining
+                const mainDeviceId = $("camMain").value;
+                const micDeviceId = $("micIn").value;
+
+                const mainConstraints = buildVideoConstraints(mainDeviceId, $("mainRes").value, $("mainFps").value);
+                const audioConstraints = buildAudioConstraints(micDeviceId);
+
+                log("Acquiring MAIN camera…", mainConstraints);
+                log("Using microphone deviceId:", micDeviceId || "(default)");
+
+                await stopStream(mainStream);
+                mainStream = null;
+
+                try {
+                    mainStream = await navigator.mediaDevices.getUserMedia({
+                        video: mainConstraints,
+                        audio: audioConstraints
+                    });
+                } catch (e) {
+                    log("Main getUserMedia failed; falling back to default devices.", e);
+                    mainStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                }
+
+                // Ensure mic starts unmuted
+                if ($("toggleMute")) {
+                    $("toggleMute").disabled = false;
+                    $("toggleMute").textContent = "Mute mic";
+                }
+                setMicMuted(false);
+
+                pexrtc = new PexRTC();
+
+                // Best-effort: push presentation FPS higher than slide default.
+                pexrtc.screenshare_fps = 30;
+                pexrtc.bandwidth_out = bw;
+
+                // Enforce our selected main stream when supported by this build.
+                if ("user_media_stream" in pexrtc) {
+                    pexrtc.user_media_stream = mainStream;
+                    log("Set pexrtc.user_media_stream (main cam + mic selection enforced).");
+                } else {
+                    log("pexrtc.user_media_stream not available in this build; main devices may still be browser-chosen.");
+                }
+
+                pexrtc.onSetup = () => {
+                    log("onSetup -> connect()");
+                    pexrtc.connect(null);
+                };
+
+                // ✅ Main remote stream (other participants) should arrive here
+                pexrtc.onConnect = (remoteStream) => {
+                    connected = true;
+
+                    const tracks = remoteStream?.getTracks?.() ?? [];
+                    log("onConnect (main) tracks:", tracks.map(t => `${t.kind}:${t.readyState}`));
+
+                    if (remoteStream) $("remote").srcObject = remoteStream;
+
+                    $("leave").disabled = false;
+                    enableSecondCamControls(true);
+                };
+
+                // ✅ Only request the presentation stream when the conference announces one exists
+                pexrtc.onPresentation = (setting, presenter, uuid, presenter_source) => {
+                    log("onPresentation:", { setting, presenter, uuid, presenter_source });
+
+                    if (setting) {
+                        try { pexrtc.getPresentation(); } catch (e) { log("getPresentation failed (non-fatal):", e); }
+                    } else {
+                        $("remotePres").srcObject = null;
+                    }
+                };
+
+                pexrtc.onPresentationConnected = (presStream) => {
+                    log("onPresentationConnected");
+                    if (presStream) $("remotePres").srcObject = presStream;
+                };
+
+                pexrtc.onDisconnect = (reason) => {
+                    log("onDisconnect:", reason);
+                    connected = false;
+
+                    $("remote").srcObject = null;
+                    $("remotePres").srcObject = null;
+
+                    $("leave").disabled = true;
+                    enableSecondCamControls(false);
+
+                    if ($("toggleMute")) {
+                        $("toggleMute").disabled = true;
+                        $("toggleMute").textContent = "Mute mic";
+                    }
+                    micMuted = false;
+                };
+
+                pexrtc.onError = (e) => log("onError:", e);
+
+                log("Node host passed to makeCall:", node.host);
+                log("makeCall…");
+                pexrtc.makeCall(node.host, alias, name, bw, "webrtc");
+
+                // ❌ IMPORTANT: DO NOT call pexrtc.getPresentation() here anymore.
+                // The onPresentation handler above will call it when a presentation is actually available.
+            };
+
+            /**
+             * ------------------------------------------------------
+             * Stop second camera presentation
+             * ------------------------------------------------------
+             */
+            async function stopSecondCam() {
+                if (!pexrtc) return;
+
+                try { pexrtc.present(null); } catch (e) { log("present(null) failed (non-fatal):", e); }
+
+                await stopStream(secondCamStream);
+                secondCamStream = null;
+                $("local2").srcObject = null;
+
+                try { pexrtc.user_presentation_stream = null; } catch { }
+                log("Stopped presentation / 2nd camera.");
+            }
+
+            /**
+             * ------------------------------------------------------
+             * Leave call
+             * ------------------------------------------------------
+             */
+            $("leave").onclick = async () => {
+                await stopSecondCam();
+                await stopStream(mainStream);
+                mainStream = null;
+
+                if (pexrtc) {
+                    try { pexrtc.disconnect(); } catch { }
+                }
+                pexrtc = null;
+
+                $("leave").disabled = true;
+                enableSecondCamControls(false);
+
+                if ($("toggleMute")) {
+                    $("toggleMute").disabled = true;
+                    $("toggleMute").textContent = "Mute mic";
+                }
+                micMuted = false;
+
+                log("Left call.");
+            };
+
+            /**
+             * ------------------------------------------------------
+             * Start second camera as presentation/content
+             * ------------------------------------------------------
+             */
+            async function startSecondCam() {
+                if (!pexrtc || !connected) return log("Connect first.");
+
+                const deviceId = $("cam2").value;
+                const videoConstraints = buildVideoConstraints(deviceId, $("res").value, $("fps").value);
+
+                log("Acquiring 2nd camera stream…", videoConstraints);
+
+                await stopStream(secondCamStream);
+                secondCamStream = await navigator.mediaDevices.getUserMedia({ video: videoConstraints, audio: false });
+                $("local2").srcObject = secondCamStream;
+
+                try {
+                    pexrtc.user_presentation_stream = secondCamStream;
+                    pexrtc.screenshare_fps = parseInt($("fps").value, 10) || 30;
+                } catch (e) {
+                    log("Setting presentation stream failed:", e);
+                }
+
+                log("Starting presentation…");
+                pexrtc.present("screen");
+            }
+
+            $("start2").onclick = () => startSecondCam().catch(e => log("start2 error:", e));
+            $("stop2").onclick = () => stopSecondCam().catch(e => log("stop2 error:", e));
+        })();
+    </script>
+
+
+</body>
+
+</html>
