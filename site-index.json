@@ -25,7 +25,7 @@
     },
     {
         "title": "PexRTC send second camera example",
-        "path": "genesys/",
+        "path": "second-camera-pexrtc/",
         "description": "Send second camera as second stream",
         "tags": [
             "pexip",
