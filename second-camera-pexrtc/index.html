@@ -17,11 +17,11 @@
             --danger: #dc2626;
             --radius: 14px;
         }
-    
+
         * {
             box-sizing: border-box;
         }
-    
+
         body {
             margin: 0;
             padding: 24px;
@@ -29,44 +29,44 @@
             background: var(--bg);
             color: var(--text);
         }
-    
+
         h2 {
             margin-bottom: 20px;
             font-weight: 600;
         }
-    
+
         .grid {
             display: grid;
             grid-template-columns: 360px 1fr;
             gap: 20px;
         }
-    
+
         @media (max-width: 1000px) {
             .grid {
                 grid-template-columns: 1fr;
             }
         }
-    
+
         fieldset {
             background: var(--panel);
             border: 1px solid var(--panel-border);
             border-radius: var(--radius);
             padding: 18px;
         }
-    
+
         legend {
             font-weight: 600;
             padding: 0 8px;
             color: var(--muted);
         }
-    
+
         label {
             display: block;
             font-size: 12px;
             color: var(--muted);
             margin-top: 12px;
         }
-    
+
         input,
         select {
             width: 100%;
@@ -77,13 +77,13 @@
             background: #0b1220;
             color: var(--text);
         }
-    
+
         input:focus,
         select:focus {
             outline: none;
             border-color: var(--accent);
         }
-    
+
         button {
             padding: 9px 12px;
             border-radius: 8px;
@@ -94,50 +94,50 @@
             cursor: pointer;
             transition: background 0.2s ease;
         }
-    
+
         button:hover:not(:disabled) {
             background: var(--accent-hover);
         }
-    
+
         button:disabled {
             opacity: 0.5;
             cursor: not-allowed;
         }
-    
+
         button.secondary {
             background: #374151;
         }
-    
+
         button.secondary:hover:not(:disabled) {
             background: #4b5563;
         }
-    
+
         button.danger {
             background: var(--danger);
         }
-    
+
         .row {
             display: flex;
             gap: 10px;
             margin-top: 12px;
         }
-    
+
         .row>* {
             flex: 1;
         }
-    
+
         .stack {
             display: grid;
             gap: 18px;
         }
-    
+
         video {
             width: 100%;
             background: black;
             border-radius: var(--radius);
             border: 1px solid var(--panel-border);
         }
-    
+
         pre {
             background: #0b1220;
             border: 1px solid var(--panel-border);
@@ -147,7 +147,7 @@
             overflow: auto;
             color: #d1d5db;
         }
-    
+
         .hint,
         .small {
             font-size: 12px;
@@ -170,6 +170,9 @@
 
             <label>VMR alias</label>
             <input id="alias" placeholder="test  (or test@yourdomain)" />
+
+            <label>PIN (optional)</label>
+            <input id="pin" placeholder="e.g. 1234" autocomplete="one-time-code" inputmode="numeric" />
 
             <label>Display name</label>
             <input id="name" value="SecondCam Tester" />
@@ -195,7 +198,7 @@
 
             <label>Microphone device</label>
             <select id="micIn" disabled></select>
-            
+
             <div class="row" style="margin-top:10px;">
                 <button id="toggleMute" disabled>Mute mic</button>
                 <button id="refreshDevices" disabled>Refresh devices</button>
@@ -547,10 +550,15 @@
                     log("pexrtc.user_media_stream not available in this build; main devices may still be browser-chosen.");
                 }
 
-                pexrtc.onSetup = () => {
-                    log("onSetup -> connect()");
-                    pexrtc.connect(null);
+                pexrtc.onSetup = (localStream, pin_status) => {
+                    const pin = ($("pin")?.value || "").trim();
+
+                    log("onSetup -> connect()", { pin_status, pinProvided: !!pin });
+
+                    // If a PIN is required, supply it here. If not required, passing null is fine.
+                    pexrtc.connect(pin ? pin : null);
                 };
+
 
                 // ✅ Main remote stream (other participants) should arrive here
                 pexrtc.onConnect = (remoteStream) => {
