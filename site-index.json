@@ -1,0 +1,25 @@
+[
+    {
+        "title": "Middleware README",
+        "path": "middleware/",
+        "description": "Docs and setup for the middleware service.",
+        "tags": [
+            "docs",
+            "backend"
+        ],
+        "updated": "2026-02-12",
+        "badge": "Docs"
+    },
+    {
+        "title": "Pexip Plugin",
+        "path": "plugin/",
+        "description": "Dialout picker plugin pages and examples.",
+        "tags": [
+            "pexip",
+            "plugin",
+            "js"
+        ],
+        "updated": "2026-02-12",
+        "badge": "UI"
+    }
+]

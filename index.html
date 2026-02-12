@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Project Index</title>
+    <meta name="description" content="Index of subpages hosted on GitHub Pages." />
+    <style>
+        :root {
+            --bg: #0b1220;
+            --card: rgba(255, 255, 255, 0.06);
+            --card2: rgba(255, 255, 255, 0.10);
+            --text: rgba(255, 255, 255, 0.92);
+            --muted: rgba(255, 255, 255, 0.70);
+            --line: rgba(255, 255, 255, 0.12);
+            --accent: #7dd3fc;
+            --shadow: 0 18px 60px rgba(0, 0, 0, 0.35);
+            --radius: 18px;
+            --max: 980px;
+        }
+
+        @media (prefers-color-scheme: light) {
+            :root {
+                --bg: #f7fafc;
+                --card: rgba(0, 0, 0, 0.04);
+                --card2: rgba(0, 0, 0, 0.06);
+                --text: rgba(0, 0, 0, 0.88);
+                --muted: rgba(0, 0, 0, 0.62);
+                --line: rgba(0, 0, 0, 0.10);
+                --accent: #0369a1;
+                --shadow: 0 18px 60px rgba(0, 0, 0, 0.10);
+            }
+        }
+
+        body {
+            margin: 0;
+            font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+            color: var(--text);
+            background:
+                radial-gradient(1200px 700px at 20% -10%, rgba(125, 211, 252, 0.25), transparent 60%),
+                radial-gradient(900px 600px at 90% 0%, rgba(167, 139, 250, 0.18), transparent 55%),
+                radial-gradient(900px 700px at 50% 120%, rgba(34, 197, 94, 0.10), transparent 50%),
+                var(--bg);
+            min-height: 100vh;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+            text-underline-offset: 3px;
+        }
+
+        .wrap {
+            max-width: var(--max);
+            margin: 0 auto;
+            padding: 40px 18px 60px;
+        }
+
+        header {
+            display: flex;
+            gap: 16px;
+            align-items: flex-start;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            margin-bottom: 18px;
+        }
+
+        .title {
+            display: grid;
+            gap: 8px;
+            max-width: 720px;
+        }
+
+        h1 {
+            font-size: clamp(28px, 4vw, 44px);
+            line-height: 1.06;
+            margin: 0;
+            letter-spacing: -0.02em;
+        }
+
+        .subtitle {
+            margin: 0;
+            color: var(--muted);
+            font-size: 15px;
+            line-height: 1.5;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            margin-top: 6px;
+        }
+
+        .pill {
+            border: 1px solid var(--line);
+            background: var(--card);
+            border-radius: 999px;
+            padding: 10px 12px;
+            box-shadow: none;
+            color: var(--text);
+            font-size: 14px;
+        }
+
+        .pill input {
+            border: 0;
+            outline: none;
+            background: transparent;
+            color: inherit;
+            width: min(320px, 60vw);
+            font-size: 14px;
+        }
+
+        .btn {
+            cursor: pointer;
+            border: 1px solid var(--line);
+            background: linear-gradient(180deg, var(--card2), var(--card));
+            border-radius: 999px;
+            padding: 10px 12px;
+            font-size: 14px;
+            box-shadow: var(--shadow);
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 14px;
+            margin-top: 20px;
+        }
+
+        .card {
+            grid-column: span 6;
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            background: linear-gradient(180deg, var(--card2), var(--card));
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            position: relative;
+            transition: transform 120ms ease, border-color 120ms ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(125, 211, 252, 0.35);
+        }
+
+        @media (max-width: 780px) {
+            .card {
+                grid-column: span 12;
+            }
+
+            .pill input {
+                width: min(520px, 78vw);
+            }
+        }
+
+        .card a {
+            display: block;
+            padding: 16px 16px 14px;
+            text-decoration: none;
+        }
+
+        .card h2 {
+            margin: 0 0 6px;
+            font-size: 18px;
+            letter-spacing: -0.01em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .badge {
+            font-size: 12px;
+            color: var(--muted);
+            border: 1px solid var(--line);
+            padding: 3px 8px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .desc {
+            margin: 0;
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.45;
+        }
+
+        .meta {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .meta span {
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            padding: 4px 8px;
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        footer {
+            margin-top: 26px;
+            padding-top: 18px;
+            border-top: 1px solid var(--line);
+            color: var(--muted);
+            font-size: 13px;
+            display: flex;
+            gap: 10px;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+
+        .empty,
+        .error {
+            grid-column: 1 / -1;
+            border: 1px dashed var(--line);
+            border-radius: var(--radius);
+            padding: 18px;
+            color: var(--muted);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .error {
+            border-style: solid;
+        }
+
+        .muted {
+            color: var(--muted);
+        }
+
+        code {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+        <header>
+            <div class="title">
+                <h1>GitHub Pages Index</h1>
+                <p class="subtitle">
+                    A simple landing page that links to pages in subfolders. Edit <code>site-index.json</code> to
+                    add/remove entries.
+                </p>
+            </div>
+
+            <div class="toolbar">
+                <label class="pill" title="Filter by name, description, tags">
+                    🔎 <input id="q" type="search" placeholder="Search pages…" autocomplete="off" />
+                </label>
+                <button class="btn" id="sortBtn" type="button" title="Toggle sort order">
+                    Sort: <span id="sortLabel">A → Z</span>
+                </button>
+            </div>
+        </header>
+
+        <main class="grid" id="grid">
+            <div class="empty">Loading…</div>
+        </main>
+
+        <footer>
+            <span>Tip: each subfolder should have its own <code>index.html</code> so the link can be
+                <code>/folder/</code>.</span>
+            <span class="muted" id="stamp"></span>
+        </footer>
+    </div>
+
+    <script>
+        const grid = document.getElementById("grid");
+        const q = document.getElementById("q");
+        const sortBtn = document.getElementById("sortBtn");
+        const sortLabel = document.getElementById("sortLabel");
+        const stamp = document.getElementById("stamp");
+
+        // Works on project pages (/repo/) and user/org pages (/)
+        const BASE = document.querySelector("base")?.href || document.location.origin + document.location.pathname.replace(/\/[^\/]*$/, "/");
+
+        let entries = [];
+        let sortMode = "az"; // "az" | "new"
+
+        function nowStamp() {
+            const d = new Date();
+            stamp.textContent = "Updated " + d.toLocaleString();
+        }
+
+        function bySearch(e, needle) {
+            if (!needle) return true;
+            const hay = [
+                e.title || "",
+                e.path || "",
+                e.description || "",
+                ...(e.tags || [])
+            ].join(" ").toLowerCase();
+            return hay.includes(needle);
+        }
+
+        function sortEntries(list) {
+            const copy = [...list];
+            if (sortMode === "new") {
+                // newest first (treat missing date as old)
+                copy.sort((a, b) => (Date.parse(b.updated || b.date || 0) || 0) - (Date.parse(a.updated || a.date || 0) || 0));
+            } else {
+                copy.sort((a, b) => (a.title || "").localeCompare(b.title || ""));
+            }
+            return copy;
+        }
+
+        function render(list) {
+            grid.innerHTML = "";
+            if (!list.length) {
+                grid.innerHTML = `<div class="empty">No matches. Try a different search.</div>`;
+                return;
+            }
+
+            for (const e of list) {
+                const href = (e.url)
+                    ? e.url
+                    : new URL((e.path || "").replace(/^\//, ""), BASE).toString();
+
+                const tags = (e.tags || []).slice(0, 6).map(t => `<span>${escapeHtml(t)}</span>`).join("");
+                const updated = e.updated || e.date || null;
+
+                const metaBits = [
+                    e.kind ? `<span>${escapeHtml(e.kind)}</span>` : "",
+                    updated ? `<span>Updated: ${escapeHtml(updated)}</span>` : "",
+                    e.path ? `<span>${escapeHtml(e.path)}</span>` : ""
+                ].filter(Boolean).join("");
+
+                const badge = e.badge ? `<span class="badge">${escapeHtml(e.badge)}</span>` : "";
+
+                grid.insertAdjacentHTML("beforeend", `
+          <article class="card">
+            <a href="${href}">
+              <h2>${escapeHtml(e.title || e.path || href)} ${badge}</h2>
+              <p class="desc">${escapeHtml(e.description || "—")}</p>
+              <div class="meta">${metaBits}${tags}</div>
+            </a>
+          </article>
+        `);
+            }
+        }
+
+        function escapeHtml(s) {
+            return String(s).replace(/[&<>"']/g, c => ({
+                "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+            }[c]));
+        }
+
+        function apply() {
+            const needle = (q.value || "").trim().toLowerCase();
+            const filtered = entries.filter(e => bySearch(e, needle));
+            render(sortEntries(filtered));
+        }
+
+        async function load() {
+            try {
+                const res = await fetch("site-index.json", { cache: "no-store" });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                entries = Array.isArray(data) ? data : (data.entries || []);
+                apply();
+                nowStamp();
+            } catch (err) {
+                grid.innerHTML = `
+          <div class="error">
+            <div><strong>Couldn’t load <code>site-index.json</code></strong></div>
+            <div class="muted" style="margin-top:8px">
+              Create it at the repo root. Example:
+              <pre style="white-space:pre-wrap; margin:10px 0 0; font-size:12px; color:inherit; opacity:.9;">[
+  {"title":"Docs","path":"docs/","description":"Project docs","tags":["docs"]},
+  {"title":"Demo","path":"demo/","description":"Small demo app","tags":["demo","ui"]}
+]</pre>
+            </div>
+          </div>
+        `;
+                console.warn(err);
+            }
+        }
+
+        q.addEventListener("input", apply);
+        sortBtn.addEventListener("click", () => {
+            sortMode = (sortMode === "az") ? "new" : "az";
+            sortLabel.textContent = (sortMode === "az") ? "A → Z" : "Newest";
+            apply();
+        });
+
+        load();
+    </script>
+</body>
+
+</html>
