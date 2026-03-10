@@ -25,7 +25,7 @@
     },
     {
         "title": "Pexip ABAC and Policy Proxy flow",
-        "path": "sabac_flow/",
+        "path": "abac_flow/",
         "description": "Demo Policy proxy and ABAC flow",
         "tags": [
             "pexip"
