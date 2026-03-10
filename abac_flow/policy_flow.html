@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pexip Policy Proxy — Flow Diagram</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html,
+        body {
+            background: #0a0c0f;
+            color: #c8d6e5;
+            font-family: 'IBM Plex Sans', sans-serif;
+            min-height: 100vh;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0a0c0f;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #1e2730;
+            border-radius: 3px;
+        }
+
+        .page {
+            max-width: 1140px;
+            margin: 0 auto;
+            padding: 36px 32px 60px;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 8px;
+        }
+
+        .header h1 {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: .16em;
+            text-transform: uppercase;
+            color: #00b4ff;
+        }
+
+        .header p {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 10px;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            color: #2e4560;
+            margin-top: 2px;
+        }
+
+        .sep {
+            width: 1px;
+            height: 28px;
+            background: #1e2730;
+            flex-shrink: 0;
+        }
+
+        .legend {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 28px;
+            padding: 10px 16px;
+            background: #0f1318;
+            border: 1px solid #1e2730;
+            border-radius: 4px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 10px;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            color: #5a7a96;
+        }
+
+        .diagram-wrap {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        svg.main {
+            display: block;
+            width: 100%;
+        }
+
+        @keyframes dash-flow {
+            from {
+                stroke-dashoffset: 20;
+            }
+
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        .flow-line {
+            animation: dash-flow .8s linear infinite;
+        }
+
+        .steps {
+            margin-top: 32px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+        }
+
+        .step {
+            background: #0f1318;
+            border: 1px solid #1e2730;
+            border-radius: 4px;
+            padding: 12px 14px;
+        }
+
+        .step-num {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 18px;
+            font-weight: 600;
+            color: #00b4ff;
+            opacity: .28;
+            line-height: 1;
+            margin-bottom: 5px;
+        }
+
+        .step-num.avatar {
+            color: #9c27b0;
+        }
+
+        .step-title {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            color: #c8d6e5;
+            margin-bottom: 4px;
+        }
+
+        .step-desc {
+            font-size: 12px;
+            color: #5a7a96;
+            line-height: 1.55;
+        }
+
+        .mono {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 11px;
+            color: #00b4ff;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page">
+
+        <div class="header">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="30" height="30" style="flex-shrink:0">
+                <defs>
+                    <linearGradient id="hl0" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#0f1c2a" />
+                        <stop offset="100%" stop-color="#0a1520" />
+                    </linearGradient>
+                    <linearGradient id="hl1" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="#4fc3f7" />
+                        <stop offset="100%" stop-color="#0288d1" />
+                    </linearGradient>
+                    <linearGradient id="hl2" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="#00c853" />
+                        <stop offset="100%" stop-color="#00962e" />
+                    </linearGradient>
+                    <linearGradient id="hl3" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="#00b4ff" />
+                        <stop offset="100%" stop-color="#0077aa" />
+                    </linearGradient>
+                    <linearGradient id="hl4" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="#f44336" />
+                        <stop offset="100%" stop-color="#b71c1c" />
+                    </linearGradient>
+                </defs>
+                <rect width="32" height="32" rx="7" fill="url(#hl0)" stroke="#1e3a52" stroke-width="0.8" />
+                <rect x="6" y="0" width="20" height="1.5" rx="0.75" fill="url(#hl1)" opacity="0.6" />
+                <rect x="14.5" y="5" width="3" height="11" rx="1.5" fill="url(#hl1)" />
+                <circle cx="16" cy="4.5" r="2" fill="#4fc3f7" opacity="0.9" />
+                <line x1="5" y1="17.5" x2="27" y2="17.5" stroke="#1e3a52" stroke-width="1.2" />
+                <polyline points="14,15.5 16,17.5 18,15.5" fill="none" stroke="#4fc3f7" stroke-width="1"
+                    stroke-linecap="round" stroke-linejoin="round" opacity="0.7" />
+                <line x1="9.5" y1="19.5" x2="9.5" y2="26.5" stroke="url(#hl2)" stroke-width="2.2"
+                    stroke-linecap="round" />
+                <polyline points="7,24 9.5,26.5 12,24" fill="none" stroke="url(#hl2)" stroke-width="1.6"
+                    stroke-linecap="round" stroke-linejoin="round" />
+                <line x1="16" y1="19.5" x2="16" y2="26.5" stroke="url(#hl3)" stroke-width="2.2"
+                    stroke-linecap="round" />
+                <polyline points="13.5,24 16,26.5 18.5,24" fill="none" stroke="url(#hl3)" stroke-width="1.6"
+                    stroke-linecap="round" stroke-linejoin="round" />
+                <line x1="22.5" y1="19.5" x2="22.5" y2="26.5" stroke="url(#hl4)" stroke-width="2.2"
+                    stroke-linecap="round" />
+                <polyline points="20,24 22.5,26.5 25,24" fill="none" stroke="url(#hl4)" stroke-width="1.6"
+                    stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <div class="sep"></div>
+            <div>
+                <h1>Policy Proxy — Request Flow</h1>
+                <p>Pexip Infinity · External Policy Architecture</p>
+            </div>
+        </div>
+
+        <div class="legend">
+            <div class="legend-item"><svg width="28" height="4">
+                    <line x1="0" y1="2" x2="28" y2="2" stroke="#00b4ff" stroke-width="2" stroke-dasharray="5,3" />
+                </svg>Policy request</div>
+            <div class="legend-item"><svg width="28" height="4">
+                    <line x1="0" y1="2" x2="28" y2="2" stroke="#ff9800" stroke-width="2" stroke-dasharray="4,3" />
+                </svg>Policy response</div>
+            <div class="legend-item"><svg width="28" height="4">
+                    <line x1="0" y1="2" x2="28" y2="2" stroke="#9c27b0" stroke-width="2" stroke-dasharray="5,3" />
+                </svg>Avatar request</div>
+            <div class="legend-item"><svg width="10" height="10">
+                    <circle cx="5" cy="5" r="4" fill="rgba(156,39,176,.15)" stroke="#9c27b0" stroke-width="1.5" />
+                </svg>LDAP / Entra ID</div>
+            <div class="legend-item"><svg width="10" height="10">
+                    <circle cx="5" cy="5" r="4" fill="rgba(0,200,83,.15)" stroke="#00c853" stroke-width="1.5" />
+                </svg>ABAC</div>
+            <div class="legend-item"><svg width="10" height="10">
+                    <circle cx="5" cy="5" r="4" fill="rgba(0,180,255,.15)" stroke="#00b4ff" stroke-width="1.5" />
+                </svg>Mattermost</div>
+            <div class="legend-item"><svg width="10" height="10">
+                    <circle cx="5" cy="5" r="4" fill="rgba(255,152,0,.15)" stroke="#ff9800" stroke-width="1.5" />
+                </svg>Web Scheduler</div>
+        </div>
+
+        <div class="diagram-wrap">
+            <!-- viewBox extended to 760 height, 1280 width to fit LDAP/Entra node -->
+            <svg class="main" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 760"
+                style="background:#0a0c0f; border-radius:6px; border:1px solid #1e2730;">
+                <defs>
+                    <linearGradient id="g0" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#0f1c2a" />
+                        <stop offset="100%" stop-color="#0a1520" />
+                    </linearGradient>
+                    <linearGradient id="g1" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="#4fc3f7" />
+                        <stop offset="100%" stop-color="#0288d1" />
+                    </linearGradient>
+                    <linearGradient id="g2" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="#00c853" />
+                        <stop offset="100%" stop-color="#00962e" />
+                    </linearGradient>
+                    <linearGradient id="g3" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="#00b4ff" />
+                        <stop offset="100%" stop-color="#0077aa" />
+                    </linearGradient>
+                    <linearGradient id="g4" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="#f44336" />
+                        <stop offset="100%" stop-color="#b71c1c" />
+                    </linearGradient>
+                    <!-- purple avatar gradient -->
+                    <linearGradient id="g5" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="#ce93d8" />
+                        <stop offset="100%" stop-color="#7b1fa2" />
+                    </linearGradient>
+                    <marker id="mb" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                        <polygon points="0 0,8 3,0 6" fill="#00b4ff" />
+                    </marker>
+                    <marker id="mg" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                        <polygon points="0 0,8 3,0 6" fill="#00c853" />
+                    </marker>
+                    <marker id="mo" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                        <polygon points="0 0,8 3,0 6" fill="#ff9800" />
+                    </marker>
+                    <marker id="md" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                        <polygon points="0 0,8 3,0 6" fill="#2e4560" />
+                    </marker>
+                    <marker id="mav" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                        <polygon points="0 0,8 3,0 6" fill="#9c27b0" />
+                    </marker>
+                </defs>
+
+                <!-- ══════════════════════════════════
+         LAYOUT (SVG units):
+         Participant:  x=20  y=20  w=160 h=80   bot=100  midx=100
+         Infinity:     x=20  y=140 w=190 h=215  bot=355  midy=247 right=210
+         Proxy:        x=310 y=80  w=290 h=330  bot=410  midy=245 right=600
+         ABAC:         x=740 y=20  w=295 h=175  midy=107 left=740
+         Mattermost:   x=740 y=265 w=295 h=150  midy=340 left=740
+         Scheduler:    x=740 y=490 w=295 h=150  midy=565 left=740
+         Logs:         x=310 y=578 w=290 h=80   top=578  midx=455
+    ══════════════════════════════════ -->
+
+                <!-- ARROWS (behind nodes) -->
+
+                <!-- ① down: Participant → Infinity -->
+                <line x1="100" y1="100" x2="100" y2="138" stroke="#00b4ff" stroke-width="1.8" stroke-linecap="round"
+                    stroke-dasharray="5,3" marker-end="url(#mb)" class="flow-line" />
+                <line x1="114" y1="138" x2="114" y2="100" stroke="#ff9800" stroke-width="1.4" stroke-linecap="round"
+                    stroke-dasharray="4,3" marker-end="url(#mo)" opacity="0.7" />
+
+                <!-- ② right: Infinity → Proxy -->
+                <line x1="210" y1="247" x2="308" y2="245" stroke="#00b4ff" stroke-width="1.8" stroke-linecap="round"
+                    stroke-dasharray="5,3" marker-end="url(#mb)" class="flow-line" style="animation-delay:.15s" />
+                <line x1="308" y1="261" x2="210" y2="263" stroke="#ff9800" stroke-width="1.4" stroke-linecap="round"
+                    stroke-dasharray="4,3" marker-end="url(#mo)" opacity="0.7" />
+
+                <!-- ③a green: Proxy → ABAC (policy) -->
+                <path d="M 600 155 C 670 155 670 107 740 107" stroke="#00c853" stroke-width="1.8" fill="none"
+                    stroke-dasharray="5,3" marker-end="url(#mg)" class="flow-line" style="animation-delay:.1s" />
+                <path d="M 740 121 C 670 121 670 169 600 169" stroke="#ff9800" stroke-width="1.4" fill="none"
+                    stroke-dasharray="4,3" marker-end="url(#mo)" opacity="0.7" />
+
+                <!-- ③a-avatar purple: Proxy → ABAC (avatar) — offset below green -->
+                <path d="M 600 185 C 670 185 670 135 740 135" stroke="#9c27b0" stroke-width="1.8" fill="none"
+                    stroke-dasharray="5,3" marker-end="url(#mav)" class="flow-line" style="animation-delay:.2s" />
+
+                <!-- ③b blue: Proxy → Mattermost -->
+                <path d="M 600 245 C 670 245 670 340 740 340" stroke="#00b4ff" stroke-width="1.8" fill="none"
+                    stroke-dasharray="5,3" marker-end="url(#mb)" class="flow-line" style="animation-delay:.3s" />
+                <path d="M 740 354 C 670 354 670 259 600 259" stroke="#ff9800" stroke-width="1.4" fill="none"
+                    stroke-dasharray="4,3" marker-end="url(#mo)" opacity="0.7" />
+
+                <!-- ③c orange: Proxy → Scheduler -->
+                <path d="M 600 325 C 670 325 670 565 740 565" stroke="#ff9800" stroke-width="1.8" fill="none"
+                    stroke-dasharray="5,3" marker-end="url(#mo)" class="flow-line" style="animation-delay:.5s" />
+                <path d="M 740 579 C 670 579 670 339 600 339" stroke="#5a7a96" stroke-width="1.4" fill="none"
+                    stroke-dasharray="4,3" marker-end="url(#md)" opacity="0.6" />
+
+                <!-- Proxy bot → Logs -->
+                <line x1="455" y1="397" x2="455" y2="578" stroke="#2e4560" stroke-width="1.2" stroke-dasharray="3,3"
+                    marker-end="url(#md)" />
+
+                <!-- Step badges -->
+                <circle cx="107" cy="119" r="9" fill="#0a0c0f" stroke="#1e2730" stroke-width="1" />
+                <text x="107" y="123" text-anchor="middle" font-family="IBM Plex Mono" font-size="9"
+                    fill="#5a7a96">1</text>
+
+                <circle cx="259" cy="247" r="9" fill="#0a0c0f" stroke="#1e2730" stroke-width="1" />
+                <text x="259" y="251" text-anchor="middle" font-family="IBM Plex Mono" font-size="9"
+                    fill="#5a7a96">2</text>
+
+                <circle cx="668" cy="120" r="9" fill="#0a0c0f" stroke="#1e2730" stroke-width="1" />
+                <text x="668" y="124" text-anchor="middle" font-family="IBM Plex Mono" font-size="9"
+                    fill="#5a7a96">3a</text>
+
+                <!-- avatar step badge -->
+                <circle cx="668" cy="152" r="9" fill="#0a0c0f" stroke="#3a1a4a" stroke-width="1" />
+                <text x="668" y="156" text-anchor="middle" font-family="IBM Plex Mono" font-size="7"
+                    fill="#9c27b0">3av</text>
+
+                <circle cx="668" cy="292" r="9" fill="#0a0c0f" stroke="#1e2730" stroke-width="1" />
+                <text x="668" y="296" text-anchor="middle" font-family="IBM Plex Mono" font-size="9"
+                    fill="#5a7a96">3b</text>
+
+                <circle cx="668" cy="445" r="9" fill="#0a0c0f" stroke="#1e2730" stroke-width="1" />
+                <text x="668" y="449" text-anchor="middle" font-family="IBM Plex Mono" font-size="9"
+                    fill="#5a7a96">3c</text>
+
+                <!-- Arrow labels -->
+                <rect x="224" y="232" width="70" height="13" rx="2" fill="#0a0c0f" />
+                <text x="259" y="242" text-anchor="middle" font-family="IBM Plex Mono" font-size="8.5" fill="#2e4560"
+                    letter-spacing=".5">BASIC AUTH</text>
+
+                <rect x="408" y="478" width="70" height="13" rx="2" fill="#0a0c0f" />
+                <text x="443" y="488" text-anchor="middle" font-family="IBM Plex Mono" font-size="8.5" fill="#2e4560"
+                    letter-spacing=".5">EVERY REQ</text>
+
+                <!-- ══ NODE: Participant x=20 y=20 w=160 h=80 ══ -->
+                <rect x="20" y="20" width="160" height="80" rx="4" fill="#0f1318" stroke="#2e3d4f" stroke-width="1" />
+                <text x="34" y="43" font-family="IBM Plex Mono" font-size="8.5" fill="#5a7a96"
+                    letter-spacing="1">ENDPOINT</text>
+                <text x="34" y="62" font-family="IBM Plex Sans" font-size="14" font-weight="600" fill="#c8d6e5">Pexip
+                    Client</text>
+                <text x="34" y="78" font-family="IBM Plex Mono" font-size="9" fill="#5a7a96">WebRTC / SIP / H.323</text>
+                <rect x="34" y="84" width="72" height="10" rx="2" fill="rgba(90,122,150,.1)"
+                    stroke="rgba(90,122,150,.2)" stroke-width="0.5" />
+                <text x="70" y="92" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5" fill="#5a7a96"
+                    letter-spacing=".5">PARTICIPANT</text>
+
+                <!-- ══ NODE: Infinity x=20 y=140 w=190 h=215 (taller — added avatar path) ══ -->
+                <rect x="20" y="140" width="190" height="230" rx="4" fill="rgba(0,180,255,.04)" stroke="#00b4ff"
+                    stroke-width="1" />
+                <text x="34" y="163" font-family="IBM Plex Mono" font-size="8" fill="#00b4ff"
+                    letter-spacing=".8">CONFERENCING PLATFORM</text>
+                <text x="34" y="184" font-family="IBM Plex Sans" font-size="15" font-weight="600" fill="#c8d6e5">Pexip
+                    Infinity</text>
+                <text x="34" y="200" font-family="IBM Plex Mono" font-size="9" fill="#5a7a96">Management Node</text>
+                <line x1="34" y1="212" x2="196" y2="212" stroke="rgba(0,180,255,.15)" stroke-width="1" />
+                <text x="34" y="227" font-family="IBM Plex Mono" font-size="8" fill="#2e4560"
+                    letter-spacing=".5">EXTERNAL POLICY CONFIG</text>
+                <text x="34" y="244" font-family="IBM Plex Mono" font-size="8.5"
+                    fill="#5a7a96">/policy/v1/service/configuration</text>
+                <text x="34" y="259" font-family="IBM Plex Mono" font-size="8.5"
+                    fill="#5a7a96">/policy/v1/participant/properties</text>
+                <!-- avatar path — purple tint -->
+                <text x="34" y="276" font-family="IBM Plex Mono" font-size="8.5"
+                    fill="#ce93d8">/policy/v1/participant/</text>
+                <text x="34" y="288" font-family="IBM Plex Mono" font-size="8.5" fill="#ce93d8">avatar/{alias}</text>
+                <rect x="34" y="295" width="52" height="11" rx="2" fill="rgba(156,39,176,.12)"
+                    stroke="rgba(156,39,176,.3)" stroke-width="0.5" />
+                <text x="60" y="303" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5" fill="#ce93d8"
+                    letter-spacing=".4">AVATAR</text>
+                <rect x="92" y="295" width="80" height="11" rx="2" fill="rgba(156,39,176,.06)"
+                    stroke="rgba(156,39,176,.18)" stroke-width="0.5" />
+                <text x="132" y="303" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5" fill="#9c27b0"
+                    letter-spacing=".3">BINARY PASSTHROUGH</text>
+                <text x="34" y="324" font-family="IBM Plex Mono" font-size="8" fill="#2e4560">auth: Basic → upstream
+                    creds</text>
+                <text x="34" y="338" font-family="IBM Plex Mono" font-size="8" fill="#2e4560">source IP check
+                    per-credential</text>
+
+                <!-- ══ NODE: Proxy x=310 y=80 w=290 h=330 ══ -->
+                <rect x="310" y="80" width="290" height="315" rx="4" fill="#0f1318" stroke="#00b4ff"
+                    stroke-width="1.2" />
+                <rect x="310" y="80" width="290" height="2.5" rx="1" fill="#00b4ff" opacity="0.5" />
+                <!-- logo 18x18 -->
+                <rect x="326" y="96" width="18" height="18" rx="4" fill="url(#g0)" stroke="#1e3a52"
+                    stroke-width="0.5" />
+                <rect x="329.5" y="96" width="11" height="0.8" rx="0.4" fill="url(#g1)" opacity="0.6" />
+                <rect x="333.8" y="98.5" width="1.7" height="6" rx="0.8" fill="url(#g1)" />
+                <circle cx="334.7" cy="97.8" r="1.1" fill="#4fc3f7" opacity="0.9" />
+                <line x1="328" y1="105.5" x2="342" y2="105.5" stroke="#1e3a52" stroke-width="0.7" />
+                <line x1="330.5" y1="107" x2="330.5" y2="111" stroke="url(#g2)" stroke-width="1.3"
+                    stroke-linecap="round" />
+                <line x1="334.7" y1="107" x2="334.7" y2="111" stroke="url(#g3)" stroke-width="1.3"
+                    stroke-linecap="round" />
+                <line x1="338.9" y1="107" x2="338.9" y2="111" stroke="url(#g4)" stroke-width="1.3"
+                    stroke-linecap="round" />
+                <text x="352" y="106" font-family="IBM Plex Mono" font-size="9" fill="#00b4ff" letter-spacing="1">POLICY
+                    PROXY</text>
+                <text x="352" y="118" font-family="IBM Plex Mono" font-size="8" fill="#2e4560">Docker · FastAPI</text>
+                <!-- badges -->
+                <rect x="326" y="127" width="38" height="14" rx="2" fill="rgba(0,180,255,.1)"
+                    stroke="rgba(0,180,255,.25)" stroke-width="0.5" />
+                <text x="345" y="137" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="#00b4ff"
+                    letter-spacing=".5">AUTH</text>
+                <rect x="370" y="127" width="56" height="14" rx="2" fill="rgba(0,180,255,.1)"
+                    stroke="rgba(0,180,255,.25)" stroke-width="0.5" />
+                <text x="398" y="137" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="#00b4ff"
+                    letter-spacing=".5">IP CHECK</text>
+                <rect x="432" y="127" width="54" height="14" rx="2" fill="rgba(0,180,255,.1)"
+                    stroke="rgba(0,180,255,.25)" stroke-width="0.5" />
+                <text x="459" y="137" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="#00b4ff"
+                    letter-spacing=".5">LOGGING</text>
+                <!-- rule divider -->
+                <line x1="326" y1="152" x2="586" y2="152" stroke="#1e2730" stroke-width="1" />
+                <text x="326" y="166" font-family="IBM Plex Mono" font-size="8" fill="#2e4560"
+                    letter-spacing=".5">ROUTING RULES (PRIORITY ORDER)</text>
+                <!-- rule 1 ABAC policy -->
+                <circle cx="333" cy="184" r="4" fill="#00c853" />
+                <text x="343" y="181" font-family="IBM Plex Mono" font-size="7.5" fill="#5a7a96">p=100 · service_tag
+                    regex · scope=all</text>
+                <text x="343" y="192" font-family="IBM Plex Mono" font-size="7.5"
+                    fill="#00b4ff">^\[SEC=[A-Z-]+,\s+CAVEAT=RI:…\]$</text>
+                <text x="530" y="184" font-family="IBM Plex Mono" font-size="7.5" fill="#00c853">→ ABAC</text>
+                <!-- rule 2 Scheduler -->
+                <circle cx="333" cy="210" r="4" fill="#ff9800" />
+                <text x="343" y="207" font-family="IBM Plex Mono" font-size="7.5" fill="#5a7a96">p=100 · local_alias
+                    regex · scope=all</text>
+                <text x="343" y="218" font-family="IBM Plex Mono" font-size="7.5"
+                    fill="#00b4ff">^(sip:)?99\d{9}(@pextest.com)?$</text>
+                <text x="510" y="210" font-family="IBM Plex Mono" font-size="7.5" fill="#ff9800">→ Scheduler</text>
+                <!-- rule 3 Mattermost -->
+                <circle cx="333" cy="236" r="4" fill="#00b4ff" />
+                <text x="343" y="233" font-family="IBM Plex Mono" font-size="7.5" fill="#5a7a96">p=120 · local_alias
+                    regex · scope=svc_config</text>
+                <text x="343" y="244" font-family="IBM Plex Mono" font-size="7.5" fill="#00b4ff">^[a-z0-9]{26}$</text>
+                <text x="505" y="236" font-family="IBM Plex Mono" font-size="7.5" fill="#00b4ff">→ Mattermost</text>
+                <!-- rule 4 ABAC avatar — purple, catch-all (no conditions) -->
+                <circle cx="333" cy="262" r="4" fill="#9c27b0" />
+                <text x="343" y="259" font-family="IBM Plex Mono" font-size="7.5" fill="#5a7a96">p=100 · scope=avatar ·
+                    no conditions</text>
+                <text x="343" y="270" font-family="IBM Plex Mono" font-size="7.5" fill="#ce93d8">catch-all · binary
+                    image passthrough</text>
+                <text x="530" y="262" font-family="IBM Plex Mono" font-size="7.5" fill="#9c27b0">→ ABAC</text>
+                <!-- avatar scope + catch-all badges -->
+                <rect x="343" y="275" width="44" height="11" rx="2" fill="rgba(156,39,176,.12)"
+                    stroke="rgba(156,39,176,.3)" stroke-width="0.5" />
+                <text x="365" y="283" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5" fill="#ce93d8"
+                    letter-spacing=".4">AVATAR</text>
+                <rect x="393" y="275" width="56" height="11" rx="2" fill="rgba(156,39,176,.06)"
+                    stroke="rgba(156,39,176,.18)" stroke-width="0.5" />
+                <text x="421" y="283" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5" fill="#9c27b0"
+                    letter-spacing=".3">CATCH-ALL</text>
+
+                <!-- rule divider bottom -->
+                <line x1="326" y1="295" x2="586" y2="295" stroke="#1e2730" stroke-width="1" />
+                <text x="326" y="309" font-family="IBM Plex Mono" font-size="8" fill="#2e4560" letter-spacing=".3">ALL
+                    REQUESTS FORWARDED VERBATIM</text>
+                <text x="326" y="323" font-family="IBM Plex Mono" font-size="8.5" fill="#5a7a96">Full query string
+                    preserved</text>
+                <text x="326" y="337" font-family="IBM Plex Mono" font-size="8.5" fill="#5a7a96">Response passed back
+                    unchanged (incl. binary)</text>
+
+                <!-- ══ NODE: ABAC x=740 y=20 w=295 h=175 (taller — avatar note) ══ -->
+                <rect x="740" y="20" width="295" height="190" rx="4" fill="rgba(0,200,83,.04)"
+                    stroke="rgba(0,200,83,.5)" stroke-width="1" />
+                <text x="756" y="43" font-family="IBM Plex Mono" font-size="8.5" fill="#00c853"
+                    letter-spacing=".8">UPSTREAM · POLICY SERVER</text>
+                <text x="756" y="65" font-family="IBM Plex Sans" font-size="15" font-weight="600" fill="#c8d6e5">Pexip
+                    ABAC</text>
+                <text x="756" y="81" font-family="IBM Plex Mono" font-size="9" fill="#5a7a96">abac.internal</text>
+                <line x1="756" y1="93" x2="1020" y2="93" stroke="rgba(0,200,83,.15)" stroke-width="1" />
+                <text x="756" y="108" font-family="IBM Plex Mono" font-size="8.5" fill="#5a7a96">Matched via service_tag
+                    regex</text>
+                <text x="756" y="122" font-family="IBM Plex Mono" font-size="8.5" fill="#5a7a96">SEC= classification +
+                    CAVEAT=RI:</text>
+                <rect x="756" y="133" width="42" height="14" rx="2" fill="rgba(0,200,83,.12)" stroke="rgba(0,200,83,.3)"
+                    stroke-width="0.5" />
+                <text x="777" y="143" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="#00c853"
+                    letter-spacing=".5">HTTPS</text>
+                <!-- avatar sub-note -->
+                <line x1="756" y1="157" x2="1020" y2="157" stroke="rgba(156,39,176,.2)" stroke-width="1" />
+                <text x="756" y="168" font-family="IBM Plex Mono" font-size="8.5" fill="#ce93d8">Catch-all avatar rule →
+                    returns</text>
+                <text x="756" y="180" font-family="IBM Plex Mono" font-size="8.5" fill="#ce93d8">JPEG/PNG binary to
+                    Infinity</text>
+                <rect x="756" y="186" width="44" height="12" rx="2" fill="rgba(156,39,176,.12)"
+                    stroke="rgba(156,39,176,.3)" stroke-width="0.5" />
+                <text x="778" y="195" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5" fill="#ce93d8"
+                    letter-spacing=".4">AVATAR</text>
+
+                <!-- ══ NODE: LDAP/Entra x=1060 y=40 w=185 h=130 — subordinate, dimmer ══ -->
+                <!-- arrow: ABAC right(1035,107) → LDAP left(1060,107) — avatar lookup only -->
+                <line x1="1035" y1="107" x2="1058" y2="107" stroke="#9c27b0" stroke-width="1.4" stroke-dasharray="4,3"
+                    marker-end="url(#mav)" opacity="0.7" />
+                <rect x="1062" y="5" width="12" height="13" rx="2" fill="none" stroke="#9c27b0" stroke-width="0.8"
+                    opacity="0.5" />
+                <text x="1068" y="15" text-anchor="middle" font-family="IBM Plex Mono" font-size="7" fill="#9c27b0"
+                    opacity="0.7">av</text>
+                <rect x="1060" y="22" width="185" height="130" rx="4" fill="rgba(156,39,176,.03)"
+                    stroke="rgba(156,39,176,.35)" stroke-width="1" stroke-dasharray="4,3" />
+                <text x="1072" y="42" font-family="IBM Plex Mono" font-size="8" fill="#9c27b0"
+                    letter-spacing=".7">DIRECTORY SERVICE</text>
+                <text x="1072" y="62" font-family="IBM Plex Sans" font-size="14" font-weight="600" fill="#c8d6e5">LDAP /
+                    Entra ID</text>
+                <line x1="1072" y1="72" x2="1228" y2="72" stroke="rgba(156,39,176,.2)" stroke-width="1" />
+                <text x="1072" y="87" font-family="IBM Plex Mono" font-size="8" fill="#5a7a96">Profile photo
+                    lookup</text>
+                <text x="1072" y="100" font-family="IBM Plex Mono" font-size="8" fill="#5a7a96">by UPN /
+                    sAMAccountName</text>
+                <text x="1072" y="113" font-family="IBM Plex Mono" font-size="8" fill="#5a7a96">Returns JPEG/PNG →
+                    ABAC</text>
+                <rect x="1072" y="122" width="52" height="11" rx="2" fill="rgba(156,39,176,.08)"
+                    stroke="rgba(156,39,176,.2)" stroke-width="0.5" />
+                <text x="1098" y="130" text-anchor="middle" font-family="IBM Plex Mono" font-size="7" fill="#ce93d8"
+                    letter-spacing=".4">AVATAR ONLY</text>
+                <rect x="1130" y="122" width="44" height="11" rx="2" fill="rgba(156,39,176,.05)"
+                    stroke="rgba(156,39,176,.15)" stroke-width="0.5" />
+                <text x="1152" y="130" text-anchor="middle" font-family="IBM Plex Mono" font-size="7" fill="#9c27b0"
+                    letter-spacing=".3">LDAPS / API</text>
+
+                <!-- ══ NODE: Mattermost x=740 y=265 w=295 h=150 ══ -->
+                <rect x="740" y="265" width="295" height="150" rx="4" fill="rgba(0,180,255,.04)"
+                    stroke="rgba(0,180,255,.45)" stroke-width="1" />
+                <text x="756" y="288" font-family="IBM Plex Mono" font-size="8.5" fill="#00b4ff"
+                    letter-spacing=".8">UPSTREAM · MESSAGING</text>
+                <text x="756" y="310" font-family="IBM Plex Sans" font-size="15" font-weight="600"
+                    fill="#c8d6e5">Mattermost</text>
+                <text x="756" y="326" font-family="IBM Plex Mono" font-size="9"
+                    fill="#5a7a96">mattermost.internal</text>
+                <line x1="756" y1="338" x2="1020" y2="338" stroke="rgba(0,180,255,.15)" stroke-width="1" />
+                <text x="756" y="353" font-family="IBM Plex Mono" font-size="8.5" fill="#5a7a96">Channel ID = 26-char
+                    local_alias</text>
+                <text x="756" y="367" font-family="IBM Plex Mono" font-size="8.5" fill="#5a7a96">service_configuration
+                    scope only</text>
+                <rect x="756" y="378" width="42" height="14" rx="2" fill="rgba(0,180,255,.1)"
+                    stroke="rgba(0,180,255,.25)" stroke-width="0.5" />
+                <text x="777" y="388" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="#00b4ff"
+                    letter-spacing=".5">HTTPS</text>
+                <rect x="805" y="378" width="104" height="14" rx="2" fill="rgba(0,180,255,.06)"
+                    stroke="rgba(0,180,255,.18)" stroke-width="0.5" />
+                <text x="857" y="388" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5" fill="#5a7a96"
+                    letter-spacing=".3">SVC_CONFIG ONLY</text>
+
+                <!-- ══ NODE: Scheduler x=740 y=490 w=295 h=150 ══ -->
+                <rect x="740" y="490" width="295" height="150" rx="4" fill="rgba(255,152,0,.04)"
+                    stroke="rgba(255,152,0,.45)" stroke-width="1" />
+                <text x="756" y="513" font-family="IBM Plex Mono" font-size="8.5" fill="#ff9800"
+                    letter-spacing=".8">UPSTREAM · SCHEDULING</text>
+                <text x="756" y="535" font-family="IBM Plex Sans" font-size="15" font-weight="600" fill="#c8d6e5">Pexip
+                    Web Scheduler</text>
+                <text x="756" y="551" font-family="IBM Plex Mono" font-size="9" fill="#5a7a96">scheduler.internal</text>
+                <line x1="756" y1="563" x2="1020" y2="563" stroke="rgba(255,152,0,.15)" stroke-width="1" />
+                <text x="756" y="578" font-family="IBM Plex Mono" font-size="8.5" fill="#5a7a96">ANZSEC 11-digit VMR
+                    numbers</text>
+                <text x="756" y="592" font-family="IBM Plex Mono" font-size="8.5" fill="#5a7a96">local_alias regex
+                    99\d{9}</text>
+                <rect x="756" y="603" width="42" height="14" rx="2" fill="rgba(255,152,0,.12)"
+                    stroke="rgba(255,152,0,.3)" stroke-width="0.5" />
+                <text x="777" y="613" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="#ff9800"
+                    letter-spacing=".5">HTTPS</text>
+
+                <!-- ══ NODE: Logs x=310 y=578 w=290 h=80 ══ -->
+                <rect x="310" y="578" width="290" height="80" rx="4" fill="#0f1318" stroke="#2e3d4f" stroke-width="1" />
+                <text x="326" y="599" font-family="IBM Plex Mono" font-size="8.5" fill="#2e4560"
+                    letter-spacing="1">AUDIT</text>
+                <text x="326" y="617" font-family="IBM Plex Sans" font-size="13" font-weight="600"
+                    fill="#c8d6e5">Request Log Store</text>
+                <rect x="326" y="626" width="66" height="11" rx="2" fill="rgba(90,122,150,.1)"
+                    stroke="rgba(90,122,150,.2)" stroke-width="0.5" />
+                <text x="359" y="634" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5" fill="#5a7a96"
+                    letter-spacing=".3">MATCHED RULE</text>
+                <rect x="400" y="626" width="58" height="11" rx="2" fill="rgba(90,122,150,.1)"
+                    stroke="rgba(90,122,150,.2)" stroke-width="0.5" />
+                <text x="429" y="634" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5" fill="#5a7a96"
+                    letter-spacing=".3">RESP TIME</text>
+                <rect x="466" y="626" width="50" height="11" rx="2" fill="rgba(90,122,150,.1)"
+                    stroke="rgba(90,122,150,.2)" stroke-width="0.5" />
+                <text x="491" y="634" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5" fill="#5a7a96"
+                    letter-spacing=".3">IDENTITY</text>
+
+            </svg>
+        </div>
+
+        <div class="steps">
+            <div class="step">
+                <div class="step-num">01</div>
+                <div class="step-title">Call Initiated</div>
+                <div class="step-desc">A Pexip client dials in. Infinity needs to make a policy decision before
+                    admitting the participant.</div>
+            </div>
+            <div class="step">
+                <div class="step-num">02</div>
+                <div class="step-title">Request → Proxy</div>
+                <div class="step-desc">Infinity sends an HTTP GET to the proxy with all call parameters. The proxy
+                    verifies Basic Auth credentials and optionally checks the source IP.</div>
+            </div>
+            <div class="step">
+                <div class="step-num">3a</div>
+                <div class="step-title">→ ABAC</div>
+                <div class="step-desc">If <span class="mono">service_tag</span> matches <span class="mono"
+                        style="color:#00c853">^\[SEC=…CAVEAT=RI:…\]$</span>, forwarded to the ABAC server for
+                    clearance-based decisions.</div>
+            </div>
+            <div class="step">
+                <div class="step-num avatar">3av</div>
+                <div class="step-title">→ ABAC Avatar</div>
+                <div class="step-desc">Infinity calls <span class="mono"
+                        style="color:#ce93d8">/policy/v1/participant/<br>avatar/{alias}</span> to fetch participant
+                    images. A catch-all avatar rule forwards all requests to ABAC, which returns a binary JPEG/PNG
+                    streamed back unchanged.</div>
+            </div>
+            <div class="step">
+                <div class="step-num">3b</div>
+                <div class="step-title">→ Web Scheduler</div>
+                <div class="step-desc">If <span class="mono">local_alias</span> matches <span class="mono"
+                        style="color:#ff9800">^(sip:)?99\d{9}…$</span> — an ANZSEC 11-digit VMR — routes to the Pexip
+                    Web Scheduler.</div>
+            </div>
+            <div class="step">
+                <div class="step-num">3c</div>
+                <div class="step-title">→ Mattermost</div>
+                <div class="step-desc">If <span class="mono">local_alias</span> matches <span
+                        class="mono">^[a-z0-9]{26}$</span> — a Mattermost channel ID — the service_configuration request
+                    routes to Mattermost.</div>
+            </div>
+            <div class="step">
+                <div class="step-num">04</div>
+                <div class="step-title">Response → Infinity</div>
+                <div class="step-desc">The upstream response is passed back to Infinity unchanged — JSON policy
+                    decisions or binary avatar images. Every request is logged with matched rule, upstream, identity,
+                    and response time.</div>
+            </div>
+        </div>
+
+    </div>
+</body>
+
+</html>

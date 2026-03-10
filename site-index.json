@@ -22,5 +22,15 @@
         ],
         "updated": "2026-02-12",
         "badge": "Frontend"
+    },
+    {
+        "title": "Pexip ABAC and Policy Proxy flow",
+        "path": "sabac_flow/",
+        "description": "Demo Policy proxy and ABAC flow",
+        "tags": [
+            "pexip"
+        ],
+        "updated": "2026-02-10",
+        "badge": "Frontend/Backend"
     }
 ]
