@@ -1,0 +1,1457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OP KESTREL SHIELD — Tactical COP Simulator</title>
+<style>
+  :root{
+    --bg:#080b0f;
+    --panel:#0c1117;
+    --panel2:#111922;
+    --line:#1d2a36;
+    --line2:#27394a;
+    --txt:#c8d6e2;
+    --txt-dim:#7c8fa2;
+    --accent:#39e0d0;
+    --amber:#ffb63d;
+    --red:#ff5a4d;
+    --green:#5ede7a;
+    --blue:#5aa9ff;
+    --friend:#7fc3ff;
+    --hostile:#ff8d85;
+    --neutral:#8ef0a8;
+    --unknown:#ffe27a;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  body{
+    background:var(--bg);color:var(--txt);
+    font-family:"Segoe UI",Roboto,-apple-system,"Helvetica Neue",Arial,sans-serif;
+    font-size:12px;overflow:hidden;-webkit-font-smoothing:antialiased;
+  }
+  .mono{font-family:"SF Mono",ui-monospace,"Cascadia Mono",Consolas,"Roboto Mono",monospace}
+  #app{display:flex;flex-direction:column;height:100vh}
+
+  /* ---------- top bar ---------- */
+  #topbar{
+    display:flex;align-items:center;gap:14px;height:46px;flex:0 0 46px;
+    padding:0 12px;background:linear-gradient(180deg,#101922,#0a1017);
+    border-bottom:1px solid var(--line2);
+  }
+  #brand{display:flex;align-items:center;gap:9px}
+  #brand .mk{width:22px;height:22px;border:1.5px solid var(--accent);border-radius:3px;position:relative}
+  #brand .mk:before,#brand .mk:after{content:"";position:absolute;background:var(--accent)}
+  #brand .mk:before{left:3px;right:3px;top:9.5px;height:1.5px}
+  #brand .mk:after{top:3px;bottom:3px;left:9.5px;width:1.5px}
+  #brand b{font-size:13px;letter-spacing:.14em;color:#e6f2fb}
+  #brand span{font-size:9.5px;letter-spacing:.22em;color:var(--txt-dim);display:block;margin-top:-2px}
+  .sep{width:1px;height:26px;background:var(--line2)}
+  .kv{display:flex;flex-direction:column;line-height:1.25}
+  .kv label{font-size:8.5px;letter-spacing:.18em;color:var(--txt-dim)}
+  .kv b{font-size:13px;color:#dfeaf4;font-weight:600}
+  #dtg b{color:var(--accent);letter-spacing:.04em}
+  .spacer{flex:1}
+  .pill{
+    padding:3px 9px;border:1px solid var(--line2);border-radius:11px;font-size:9.5px;
+    letter-spacing:.14em;color:var(--txt-dim);display:flex;align-items:center;gap:6px;white-space:nowrap
+  }
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px currentColor;color:var(--green)}
+  .dot.amber{background:var(--amber);color:var(--amber)}
+  .dot.red{background:var(--red);color:var(--red)}
+  #threat.high{border-color:#5d2b28;color:#ffb0a8;background:rgba(255,90,77,.08)}
+
+  /* ---------- layout ---------- */
+  #main{flex:1;display:flex;min-height:0}
+  aside{background:var(--panel);display:flex;flex-direction:column;min-height:0}
+  #left{width:242px;flex:0 0 242px;border-right:1px solid var(--line2)}
+  #right{width:288px;flex:0 0 288px;border-left:1px solid var(--line2)}
+  .sec{border-bottom:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+  .sec>h3{
+    margin:0;padding:7px 10px;font-size:9.5px;letter-spacing:.2em;color:var(--txt-dim);
+    font-weight:600;background:var(--panel2);border-bottom:1px solid var(--line);
+    display:flex;justify-content:space-between;align-items:center;flex:0 0 auto;cursor:default
+  }
+  .sec>h3 em{font-style:normal;color:#54687b;letter-spacing:.05em}
+  .scroll{overflow-y:auto;overflow-x:hidden;min-height:0}
+  .scroll::-webkit-scrollbar{width:8px}
+  .scroll::-webkit-scrollbar-track{background:transparent}
+  .scroll::-webkit-scrollbar-thumb{background:#1e2b38;border-radius:4px}
+  .scroll::-webkit-scrollbar-thumb:hover{background:#2c3f52}
+
+  /* ---------- orbat ---------- */
+  #orbat{flex:1 1 auto}
+  .grp{padding:6px 10px 3px;font-size:9px;letter-spacing:.18em;color:#66798c;display:flex;align-items:center;gap:6px}
+  .grp:before{content:"";width:7px;height:7px;border:1px solid currentColor}
+  .grp.f{color:#6ea8dd}.grp.h{color:#dd7d76}.grp.n{color:#79c78d}
+  .row{
+    display:flex;align-items:center;gap:7px;padding:3px 10px 3px 18px;cursor:pointer;
+    border-left:2px solid transparent;
+  }
+  .row:hover{background:#131d27}
+  .row.sel{background:#152535;border-left-color:var(--accent)}
+  .row .sq{width:9px;height:9px;flex:0 0 9px;border:1px solid #0a0e13}
+  .row .nm{flex:1;font-size:11px;color:#b9cadb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .row.dead .nm{color:#5c6b79;text-decoration:line-through}
+  .row .st{font-size:9px;letter-spacing:.06em;color:var(--txt-dim)}
+  .row .st.ok{color:#4e9d64}.row .st.deg{color:var(--amber)}.row .st.bad{color:var(--red)}
+  .row.undet{opacity:.45}
+
+  /* ---------- layers ---------- */
+  #layers{flex:0 0 auto;max-height:216px}
+  .lyr{display:flex;align-items:center;gap:8px;padding:3.5px 12px;cursor:pointer;font-size:11px;color:#a9bccd}
+  .lyr:hover{background:#131d27}
+  .lyr i{
+    width:12px;height:12px;border:1px solid var(--line2);border-radius:2px;flex:0 0 12px;
+    display:flex;align-items:center;justify-content:center;font-style:normal;font-size:9px;color:#04131a;background:#0a1017
+  }
+  .lyr.on i{background:var(--accent);border-color:var(--accent)}
+  .lyr.on i:after{content:"✓"}
+
+  /* ---------- time ---------- */
+  #timebar{flex:0 0 auto;padding:8px 10px 10px}
+  .btns{display:flex;gap:4px}
+  .btn{
+    flex:1;padding:5px 0;text-align:center;background:#0f1720;border:1px solid var(--line2);
+    color:#9fb3c5;font-size:10px;letter-spacing:.08em;cursor:pointer;border-radius:2px;user-select:none
+  }
+  .btn:hover{background:#16222e;color:#d6e6f3}
+  .btn.on{background:#12313a;border-color:var(--accent);color:var(--accent)}
+  .btn.wide{flex:none;padding:5px 10px}
+
+  /* ---------- map ---------- */
+  #mapwrap{flex:1;position:relative;min-width:0;background:#050a10;overflow:hidden}
+  #map{position:absolute;inset:0;width:100%;height:100%;cursor:crosshair;display:block}
+  #map.pan{cursor:grabbing}
+  #map.measure{cursor:cell}
+  .hud{position:absolute;pointer-events:none;font-size:10px;letter-spacing:.1em;color:#7f95a8}
+  #tools{
+    position:absolute;top:10px;left:10px;display:flex;flex-direction:column;gap:4px;
+  }
+  .tool{
+    width:28px;height:28px;background:rgba(10,16,23,.86);border:1px solid var(--line2);color:#9db2c4;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;border-radius:2px
+  }
+  .tool:hover{border-color:var(--accent);color:var(--accent)}
+  .tool.on{background:#12313a;border-color:var(--accent);color:var(--accent)}
+  #legendbox{
+    position:absolute;top:10px;right:10px;background:rgba(10,16,23,.9);border:1px solid var(--line2);
+    padding:8px 10px;border-radius:3px;max-width:200px;display:none
+  }
+  #legendbox.on{display:block}
+  #legendbox h4{margin:0 0 6px;font-size:9px;letter-spacing:.2em;color:var(--txt-dim);font-weight:600}
+  #legendbox div{display:flex;align-items:center;gap:7px;margin:3px 0;font-size:10px;color:#a9bccd}
+  #legendbox span.k{width:14px;height:10px;flex:0 0 14px;border:1px solid #05090d}
+  #scalebar{position:absolute;left:12px;bottom:12px}
+  #scalebar .bar{height:5px;border:1px solid #8ea4b6;border-top:none;position:relative}
+  #scalebar .bar:before{content:"";position:absolute;left:50%;top:0;bottom:0;width:1px;background:#8ea4b6}
+  #scalebar .lbl{text-align:right;font-size:9.5px;color:#8ea4b6;margin-bottom:2px}
+  #north{position:absolute;right:14px;bottom:14px;text-align:center;color:#8ea4b6}
+  #tooltip{
+    position:absolute;pointer-events:none;background:rgba(8,13,19,.95);border:1px solid var(--line2);
+    padding:5px 8px;font-size:10.5px;color:#cfe0ef;border-radius:2px;display:none;white-space:nowrap;z-index:5;
+    box-shadow:0 4px 14px rgba(0,0,0,.55)
+  }
+  #banner{
+    position:absolute;left:50%;transform:translateX(-50%);top:10px;
+    background:rgba(60,12,8,.92);border:1px solid #7a2c25;color:#ffcfc9;
+    padding:5px 14px;font-size:10.5px;letter-spacing:.16em;border-radius:2px;display:none;z-index:6
+  }
+  #banner.on{display:block;animation:bpulse 1.1s infinite}
+  @keyframes bpulse{0%,100%{border-color:#7a2c25}50%{border-color:#ff5a4d}}
+
+  /* ---------- right panel ---------- */
+  #detail{flex:0 0 auto;padding:0}
+  #detail .empty{padding:18px 12px;color:#54687b;font-size:11px;line-height:1.6}
+  .card{padding:9px 11px 11px}
+  .card .hd{display:flex;align-items:flex-start;gap:9px;margin-bottom:8px}
+  .card .sym{width:46px;height:38px;flex:0 0 46px}
+  .card .ttl b{display:block;font-size:13px;color:#e4f0fa;letter-spacing:.03em}
+  .card .ttl small{color:var(--txt-dim);font-size:10px;letter-spacing:.1em}
+  table.f{width:100%;border-collapse:collapse;margin-top:2px}
+  table.f td{padding:2.5px 0;font-size:10.5px;vertical-align:middle}
+  table.f td:first-child{color:#647a8d;letter-spacing:.09em;width:40%}
+  table.f td:last-child{color:#cfdeeb;text-align:right}
+  .bar{height:6px;background:#141d26;border:1px solid #1d2a36;position:relative;border-radius:2px;overflow:hidden;margin-top:3px}
+  .bar i{display:block;height:100%;background:var(--green);transition:width .3s}
+  .bar i.amber{background:var(--amber)}.bar i.red{background:var(--red)}
+  .metric{margin:6px 0}
+  .metric label{display:flex;justify-content:space-between;font-size:9.5px;letter-spacing:.12em;color:#647a8d}
+  .metric label b{color:#cfdeeb;font-weight:500}
+
+  /* ---------- log ---------- */
+  #log{flex:1 1 auto}
+  .ent{padding:5px 10px;border-bottom:1px solid #121a23;font-size:10.5px;line-height:1.45;display:flex;gap:7px}
+  .ent time{color:#4f6274;flex:0 0 54px}
+  .ent .bd{flex:1;color:#a8bccd}
+  .ent .bd b{color:#d6e6f3;font-weight:600}
+  .ent.warn .bd{color:#ffcf9a}
+  .ent.warn time{color:#8a6a3c}
+  .ent.crit{background:rgba(255,90,77,.06)}
+  .ent.crit .bd{color:#ffb0a8}
+  .ent.crit time{color:#8f4740}
+  .ent.ok .bd{color:#a6dfb6}
+
+  /* ---------- status bar ---------- */
+  #statusbar{
+    flex:0 0 24px;height:24px;display:flex;align-items:center;gap:16px;padding:0 12px;
+    background:#0a1017;border-top:1px solid var(--line2);font-size:10px;color:#6e8296;letter-spacing:.1em
+  }
+  #statusbar b{color:#a7bccf;font-weight:500}
+  @media (max-width:1150px){
+    #left{width:200px;flex-basis:200px}
+    #right{width:240px;flex-basis:240px}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <header id="topbar">
+    <div id="brand"><div class="mk"></div><div><b>SENTINEL C2</b><span>LAND COP — SIMULATION</span></div></div>
+    <div class="sep"></div>
+    <div class="kv"><label>OPERATION</label><b>KESTREL SHIELD</b></div>
+    <div class="sep"></div>
+    <div class="kv" id="dtg"><label>DTG</label><b class="mono">--</b></div>
+    <div class="sep"></div>
+    <div class="kv"><label>SPEED</label><b id="tsLabel">× 4</b></div>
+    <div class="spacer"></div>
+    <div class="pill" id="threat"><span class="dot amber"></span><span id="threatTxt">THREAT: ELEVATED</span></div>
+    <div class="pill"><span class="dot"></span>LINK-M: ONLINE</div>
+    <div class="pill"><span class="dot"></span>BFT: 17/17</div>
+    <div class="pill" id="clsf" style="border-color:#3b5a2c;color:#a9e08a;background:rgba(94,222,122,.07)">UNCLASSIFIED // EXERCISE</div>
+  </header>
+
+  <div id="main">
+
+    <aside id="left">
+      <div class="sec" id="orbat">
+        <h3>ORDER OF BATTLE <em id="obCount"></em></h3>
+        <div class="scroll" id="orbatList"></div>
+      </div>
+      <div class="sec" id="layers">
+        <h3>OVERLAYS</h3>
+        <div class="scroll" id="layerList"></div>
+      </div>
+      <div class="sec" id="timebar">
+        <h3 style="margin:-8px -10px 8px">SIMULATION</h3>
+        <div class="btns" style="margin-bottom:5px">
+          <div class="btn" data-ts="0">❚❚</div>
+          <div class="btn" data-ts="1">×1</div>
+          <div class="btn on" data-ts="4">×4</div>
+          <div class="btn" data-ts="15">×15</div>
+          <div class="btn" data-ts="60">×60</div>
+        </div>
+        <div class="btns">
+          <div class="btn" id="btnReset">RESTART SCENARIO</div>
+        </div>
+      </div>
+    </aside>
+
+    <div id="mapwrap">
+      <svg id="map"></svg>
+      <div id="tools">
+        <div class="tool" id="tZoomIn" title="Zoom in">+</div>
+        <div class="tool" id="tZoomOut" title="Zoom out">−</div>
+        <div class="tool" id="tFit" title="Fit to area of operations">⛶</div>
+        <div class="tool" id="tMeasure" title="Measure range &amp; bearing">↔</div>
+        <div class="tool" id="tLabels" title="Toggle unit labels">A</div>
+        <div class="tool" id="tLegend" title="Legend">?</div>
+      </div>
+      <div id="legendbox">
+        <h4>SYMBOLOGY</h4>
+        <div><span class="k" style="background:#7fc3ff"></span>FRIENDLY (BLUEFOR)</div>
+        <div><span class="k" style="background:#ff8d85;transform:rotate(45deg) scale(.8)"></span>HOSTILE (OPFOR)</div>
+        <div><span class="k" style="background:#8ef0a8"></span>NEUTRAL</div>
+        <div><span class="k" style="background:#ffe27a;border-radius:50%"></span>UNKNOWN / PENDING</div>
+        <div style="margin-top:7px;color:#647a8d;font-size:9.5px;line-height:1.5">
+          Dashed frame = last known position, track not currently held. Echelon: I coy · II bn · X bde.
+        </div>
+      </div>
+      <div id="banner">⚠ TROOPS IN CONTACT</div>
+      <div id="tooltip"></div>
+      <div class="hud" id="scalebar">
+        <div class="lbl mono">0</div><div class="bar" style="width:100px"></div>
+      </div>
+      <div class="hud" id="north">
+        <svg width="26" height="34" viewBox="0 0 26 34"><path d="M13 2 L20 30 L13 24 L6 30 Z" fill="none" stroke="#8ea4b6" stroke-width="1.2"/><path d="M13 2 L13 24 L6 30 Z" fill="#8ea4b6" opacity=".55"/></svg>
+        <div style="font-size:9px;margin-top:-3px">GN</div>
+      </div>
+    </div>
+
+    <aside id="right">
+      <div class="sec" id="detail">
+        <h3>TRACK DETAIL</h3>
+        <div id="detailBody"><div class="empty">No track selected.<br><br>Select a symbol on the map or a unit in the order of battle to view its status, holdings and current tasking.</div></div>
+      </div>
+      <div class="sec" id="log">
+        <h3>OPERATIONS LOG <em id="logCount"></em></h3>
+        <div class="scroll" id="logList"></div>
+      </div>
+    </aside>
+
+  </div>
+
+  <footer id="statusbar">
+    <span>GRID <b id="sbGrid" class="mono">—</b></span>
+    <span>ELEV <b id="sbElev" class="mono">—</b></span>
+    <span>ZOOM <b id="sbZoom" class="mono">—</b></span>
+    <span>TRACKS <b id="sbTracks" class="mono">—</b></span>
+    <span id="sbMeasure" style="color:#39e0d0"></span>
+    <span class="spacer" style="flex:1"></span>
+    <span style="color:#4f6274">FICTIONAL SCENARIO · SYNTHETIC DATA · NOT FOR OPERATIONAL USE</span>
+  </footer>
+</div>
+
+<script>
+/* ============================================================================
+   SENTINEL C2 — a browser-based simulation of a land battle-management
+   common operational picture. Everything here is invented: the terrain,
+   the units, the scenario. Symbology is *inspired by* MIL-STD-2525 /
+   APP-6 but deliberately simplified.
+   ========================================================================== */
+
+const W = 4000, H = 2600;      // world extent in map units
+const MPU = 10;                 // metres per map unit -> 40 km x 26 km AO
+const m2u = m => m / MPU;
+
+/* ---------------------------------------------------------------- helpers */
+const svgNS = "http://www.w3.org/2000/svg";
+const el = (tag, attrs = {}, parent = null) => {
+  const n = document.createElementNS(svgNS, tag);
+  for (const k in attrs) n.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(n);
+  return n;
+};
+const $ = s => document.querySelector(s);
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+const pad = (n, w) => String(Math.floor(n)).padStart(w, "0");
+
+// Catmull-Rom -> cubic bezier path, for organic coastlines / rivers / roads
+function smooth(pts, closed = false, tension = 1) {
+  if (pts.length < 2) return "";
+  const p = closed ? [pts[pts.length - 1], ...pts, pts[0], pts[1]] : [pts[0], ...pts, pts[pts.length - 1]];
+  let d = `M${pts[0][0].toFixed(1)},${pts[0][1].toFixed(1)}`;
+  for (let i = 1; i < p.length - 2; i++) {
+    const [x0, y0] = p[i - 1], [x1, y1] = p[i], [x2, y2] = p[i + 1], [x3, y3] = p[i + 2];
+    const c1x = x1 + (x2 - x0) / 6 * tension, c1y = y1 + (y2 - y0) / 6 * tension;
+    const c2x = x2 - (x3 - x1) / 6 * tension, c2y = y2 - (y3 - y1) / 6 * tension;
+    d += `C${c1x.toFixed(1)},${c1y.toFixed(1)} ${c2x.toFixed(1)},${c2y.toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)}`;
+  }
+  if (closed) d += "Z";
+  return d;
+}
+// deterministic pseudo-random so the terrain is identical every load
+let _seed = 20260827;
+const rnd = () => (_seed = (_seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
+
+/* =========================================================== TERRAIN DATA */
+const COAST = [[3050,-40],[3020,150],[2955,265],[2985,385],[3085,470],[3205,520],[3285,625],[3240,745],
+  [3060,825],[2895,880],[2815,985],[2860,1100],[2985,1180],[3120,1212],[3265,1180],[3365,1245],
+  [3405,1365],[3330,1500],[3200,1580],[3150,1705],[3195,1845],[3285,1960],[3305,2100],[3240,2240],
+  [3160,2380],[3185,2510],[3150,2640]];
+
+const RIVERS = [
+  [[520,745],[860,800],[1180,868],[1520,955],[1860,1040],[2210,1105],[2560,1128],[2830,1120]],   // R. ASH
+  [[1240,2560],[1300,2260],[1420,2010],[1580,1830],[1720,1690],[1905,1560],[2090,1480],[2340,1420],[2620,1400],[2900,1420]] // R. VELE
+];
+
+const ROADS = [
+  { n:"MSR VIPER", w:11, p:[[-40,1430],[420,1400],[820,1440],[1150,1452],[1490,1400],[1760,1305],[2050,1235],[2320,1178],[2560,1120],[2700,1055]] },
+  { n:"RTE AXE",   w:8,  p:[[1900,585],[1975,760],[2035,930],[2110,1080],[2210,1170]] },
+  { n:"RTE COBRA", w:9,  p:[[2255,-40],[2225,320],[2180,640],[2135,960],[2160,1240],[2215,1560],[2245,1900],[2320,2260],[2360,2640]] },
+  { n:"RTE OTTER", w:7,  p:[[1150,1452],[1080,1720],[1120,1950],[1300,2140],[1560,2290],[1840,2380]] },
+  { n:"COASTAL RD",w:8,  p:[[2700,1055],[2860,1010],[2960,880],[3010,700],[2985,470],[2940,250],[2925,-30]] },
+  { n:"",          w:6,  p:[[2700,1055],[2830,1230],[2900,1470],[2950,1720],[2985,1980],[3010,2240]] }
+];
+
+const URBAN = [
+  { n:"PORT HALDEN", x:2740, y:1035, w:300, h:190, big:true },
+  { n:"MARLOW",      x:1150, y:1452, w:200, h:130 },
+  { n:"ASHFORD",     x:1900, y:585,  w:170, h:110 },
+  { n:"VELE CROSS",  x:2215, y:1880, w:120, h:88 },
+  { n:"KESTREL BAY", x:2905, y:1420, w:110, h:74 }
+];
+
+const FORESTS = [[760,1900,320,180],[1560,520,300,190],[2480,2180,340,170],[600,1080,240,140],[2560,430,210,130]];
+
+// high ground: [cx, cy, rx, ry, spot-height, name]
+const HILLS = [
+  [1210,1735, 470,330, 412, "MARLOW HTS"],
+  [2320, 470, 380,280, 318, "HILL 318"],
+  [ 700, 330, 300,230, 265, ""],
+  [2680,1720, 330,250, 287, "PT 287"],
+  [1720,1080, 250,180, 190, ""]
+];
+
+/* ==================================================== TACTICAL GRAPHICS */
+const PHASELINES = [
+  { n:"PL AMBER",  x:1520 }, { n:"PL BRAVO", x:2050 }, { n:"PL CRIMSON", x:2600 }
+];
+const OBJECTIVES = [
+  { n:"OBJ FALCON", x:2470, y:770,  r:215 },
+  { n:"OBJ TIGER",  x:2300, y:1880, r:195 },
+  { n:"OBJ RAVEN",  x:2790, y:1050, r:180 }
+];
+const NAIS = [
+  { n:"NAI 03", x:2480, y:230, w:330, h:210 },
+  { n:"TAI 07", x:2600, y:1470, w:300, h:200 },
+  { n:"NAI 11", x:1980, y:2180, w:280, h:180 }
+];
+const FLOT = [[1880,-30],[1905,300],[1855,600],[1930,880],[2010,1160],[1960,1450],[2020,1740],[1975,2050],[2035,2340],[2000,2640]];
+const BOUNDARY = [[-30,1258],[520,1240],[1100,1268],[1680,1226],[2260,1248],[2840,1210],[3420,1240]];
+
+/* ============================================================ UNIT ROSTER */
+/* sid: F friend, H hostile, N neutral, U unknown
+   type: hq inf mech armor recon arty mortar eng ad med sup rotary uav ship
+   ech:  '' | 'sqd' | 'plt' | 'coy' | 'bn' | 'bde'                        */
+const ROSTER = [
+  // ---- BLUEFOR : Task Force KESTREL (1 BCT) ----------------------------
+  {id:"TFK",  n:"TF KESTREL MAIN", sid:"F", type:"hq",   ech:"bde", grp:"TF KESTREL (1 BCT)", pos:[620,1520], pers:64,  det:2500},
+  {id:"TAC",  n:"KESTREL TAC",     sid:"F", type:"hq",   ech:"coy", grp:"TF KESTREL (1 BCT)", pos:[1190,1530], pers:22, det:2500,
+     rt:[[1190,1530],[1520,1470],[1800,1380],[2040,1300]], spd:18},
+  {id:"A14",  n:"A/1-4 IN",  sid:"F", type:"mech", ech:"coy", grp:"1-4 INFANTRY (MECH)", pos:[1450,1120], pers:132, det:2600,
+     rt:[[1450,1120],[1720,1058],[2010,985],[2280,930],[2460,880]], spd:22},
+  {id:"B14",  n:"B/1-4 IN",  sid:"F", type:"mech", ech:"coy", grp:"1-4 INFANTRY (MECH)", pos:[1420,1300], pers:128, det:2600,
+     rt:[[1420,1300],[1700,1245],[1980,1185],[2250,1140],[2450,1105]], spd:20},
+  {id:"C14",  n:"C/1-4 IN",  sid:"F", type:"inf",  ech:"coy", grp:"1-4 INFANTRY (MECH)", pos:[1380,1560], pers:119, det:2200,
+     rt:[[1380,1560],[1640,1600],[1900,1640],[2140,1700],[2300,1800]], spd:7},
+  {id:"M14",  n:"MTR PLT/1-4", sid:"F", type:"mortar", ech:"plt", grp:"1-4 INFANTRY (MECH)", pos:[1245,1330], pers:28, det:1500, wpn:7000,
+     rt:[[1245,1330],[1560,1285],[1820,1230]], spd:14},
+  {id:"CAV",  n:"1-7 CAV HQ", sid:"F", type:"hq",  ech:"bn",  grp:"1-7 CAVALRY (ARMD)", pos:[1390,1000], pers:30, det:2500,
+     rt:[[1390,1000],[1700,940],[2000,870],[2280,820]], spd:24},
+  {id:"A17",  n:"A/1-7 AR",  sid:"F", type:"armor", ech:"coy", grp:"1-7 CAVALRY (ARMD)", pos:[1560,880], pers:64, det:3000, wpn:3000,
+     rt:[[1560,880],[1880,800],[2200,720],[2470,690],[2680,760]], spd:28},
+  {id:"B17",  n:"B/1-7 AR",  sid:"F", type:"armor", ech:"coy", grp:"1-7 CAVALRY (ARMD)", pos:[1600,1700], pers:62, det:3000, wpn:3000,
+     rt:[[1600,1700],[1900,1755],[2180,1830],[2400,1890]], spd:26},
+  {id:"RCN",  n:"RECON TRP", sid:"F", type:"recon", ech:"plt", grp:"1-7 CAVALRY (ARMD)", pos:[1900,1000], pers:34, det:4600,
+     rt:[[1900,1000],[2240,880],[2520,760],[2720,900],[2540,1120],[2200,1160]], spd:34, loop:"pingpong"},
+  {id:"FA",   n:"3-16 FA (SP HOW)", sid:"F", type:"arty", ech:"coy", grp:"BDE TROOPS", pos:[1010,1160], pers:78, det:1500, wpn:15000},
+  {id:"AD",   n:"AD PLT (AVENGER)", sid:"F", type:"ad",  ech:"plt", grp:"BDE TROOPS", pos:[1130,1790], pers:24, det:12000, ring:5000},
+  {id:"ENG",  n:"ENG PLT",  sid:"F", type:"eng",  ech:"plt", grp:"BDE TROOPS", pos:[1420,1600], pers:30, det:1500,
+     rt:[[1420,1600],[1700,1520],[1960,1450]], spd:16},
+  {id:"MED",  n:"MED CO (ROLE 2)", sid:"F", type:"med", ech:"coy", grp:"BDE TROOPS", pos:[880,1390], pers:56, det:1000},
+  {id:"LOG",  n:"FSC LOG PKG", sid:"F", type:"sup", ech:"coy", grp:"BDE TROOPS", pos:[560,1700], pers:70, det:1200,
+     rt:[[560,1700],[1000,1620],[1420,1540],[1720,1450]], spd:26, loop:"pingpong"},
+  {id:"EGL",  n:"EAGLE 21 (AH FLT)", sid:"F", type:"rotary", ech:"", grp:"AVIATION", pos:[1100,1900], pers:8, det:6500, wpn:4200,
+     rt:[[1100,1900],[1750,1740],[2350,1470],[2720,1080],[2640,700],[2100,560],[1520,760],[1150,1300],[1100,1900]], spd:165, loop:"loop"},
+  {id:"HWK",  n:"HAWK 06 (UAS)", sid:"F", type:"uav", ech:"", grp:"AVIATION", pos:[2200,300], pers:0, det:9000,
+     rt:[[2200,300],[2700,380],[3000,760],[2960,1240],[2820,1720],[2560,2100],[2150,2200],[1900,1700],[1950,1100],[2050,620],[2200,300]], spd:115, loop:"loop"},
+
+  // ---- OPFOR : 14th Motor Rifle Brigade ---------------------------------
+  {id:"H14",  n:"14 MRB FWD CP", sid:"H", type:"hq", ech:"bn", grp:"14 MRB (OPFOR)", pos:[2985,1900], pers:40, det:2400},
+  {id:"H1",   n:"1/14 MR", sid:"H", type:"mech", ech:"coy", grp:"14 MRB (OPFOR)", pos:[2900,700], pers:118, det:2400,
+     rt:[[2900,700],[2680,745],[2450,820],[2260,905],[2120,1000]], spd:21},
+  {id:"H2",   n:"2/14 MR", sid:"H", type:"mech", ech:"coy", grp:"14 MRB (OPFOR)", pos:[2955,1455], pers:112, det:2400,
+     rt:[[2955,1455],[2740,1430],[2530,1408],[2350,1420],[2200,1470]], spd:19},
+  {id:"H3",   n:"3/14 MR", sid:"H", type:"mech", ech:"coy", grp:"14 MRB (OPFOR)", pos:[3010,2110], pers:109, det:2400,
+     rt:[[3010,2110],[2790,2060],[2570,1990],[2400,1930],[2280,1900]], spd:18},
+  {id:"HTK",  n:"TK CO/14", sid:"H", type:"armor", ech:"coy", grp:"14 MRB (OPFOR)", pos:[2865,1150], pers:58, det:2800, wpn:2800,
+     rt:[[2865,1150],[2640,1180],[2430,1235],[2280,1290]], spd:25},
+  {id:"HAR",  n:"ARTY BTY/14", sid:"H", type:"arty", ech:"coy", grp:"14 MRB (OPFOR)", pos:[3055,1620], pers:66, det:1400, wpn:12000},
+  {id:"HAD",  n:"SAM SITE ALPHA", sid:"H", type:"ad", ech:"plt", grp:"14 MRB (OPFOR)", pos:[3080,1300], pers:32, det:16000, ring:9000},
+  {id:"HRC",  n:"RECON DET/14", sid:"H", type:"recon", ech:"plt", grp:"14 MRB (OPFOR)", pos:[2600,1000], pers:26, det:3600,
+     rt:[[2600,1000],[2380,1060],[2180,1180],[2060,1330],[2260,1390],[2500,1290]], spd:31, loop:"pingpong"},
+  {id:"HIN",  n:"INF CO/14", sid:"H", type:"inf", ech:"coy", grp:"14 MRB (OPFOR)", pos:[2760,600], pers:96, det:2000,
+     rt:[[2760,600],[2620,640],[2500,720],[2420,800]], spd:6},
+  {id:"HLG",  n:"SUP DET/14", sid:"H", type:"sup", ech:"plt", grp:"14 MRB (OPFOR)", pos:[3010,1780], pers:34, det:900,
+     rt:[[3010,1780],[2900,1500],[2830,1240],[2900,1500]], spd:22, loop:"pingpong"},
+
+  // ---- NEUTRAL / UNKNOWN -------------------------------------------------
+  {id:"NGO",  n:"IHRC CONVOY", sid:"N", type:"sup", ech:"", grp:"NEUTRAL / UNKNOWN", pos:[2700,1055], pers:18, det:0,
+     rt:[[2700,1055],[2320,1178],[1760,1305],[1150,1452],[820,1440]], spd:24},
+  {id:"CIV",  n:"CIV TFC (RTE COBRA)", sid:"N", type:"sup", ech:"", grp:"NEUTRAL / UNKNOWN", pos:[2225,320], pers:0, det:0,
+     rt:[[2225,320],[2180,640],[2135,960],[2160,1240],[2215,1560],[2245,1900]], spd:38, loop:"pingpong"},
+  {id:"U17",  n:"TRK 0417", sid:"U", type:"inf", ech:"", grp:"NEUTRAL / UNKNOWN", pos:[2560,1660], pers:0, det:0,
+     rt:[[2560,1660],[2440,1720],[2360,1620],[2500,1560]], spd:12, loop:"pingpong"},
+  {id:"U18",  n:"TRK 0418 (SURF)", sid:"U", type:"ship", ech:"", grp:"NEUTRAL / UNKNOWN", pos:[3320,900], pers:0, det:0,
+     rt:[[3320,900],[3480,1080],[3520,1400],[3400,1720],[3300,1400],[3320,900]], spd:26, loop:"loop"}
+];
+
+/* ======================================================== SVG SCAFFOLDING */
+const svg = $("#map");
+const defs = el("defs", {}, svg);
+
+// hatch for urban areas
+let p = el("pattern", {id:"urbanHatch", width:"14", height:"14", patternUnits:"userSpaceOnUse"}, defs);
+el("rect", {width:14, height:14, fill:"#2b3038"}, p);
+el("path", {d:"M0 7h14M7 0v14", stroke:"#3c434e", "stroke-width":"1.4"}, p);
+// forest stipple
+p = el("pattern", {id:"forest", width:"20", height:"20", patternUnits:"userSpaceOnUse"}, defs);
+el("rect", {width:20, height:20, fill:"#16281c"}, p);
+el("circle", {cx:6, cy:6, r:2.6, fill:"#1e3826"}, p);
+el("circle", {cx:15, cy:14, r:2.6, fill:"#1e3826"}, p);
+// sea shimmer
+p = el("pattern", {id:"seaLines", width:"46", height:"46", patternUnits:"userSpaceOnUse"}, defs);
+el("rect", {width:46, height:46, fill:"none"}, p);
+el("path", {d:"M0 23q11 -7 23 0t23 0", stroke:"#123a55", "stroke-width":"1.1", fill:"none", opacity:".55"}, p);
+// diagonal hatch for restricted / NAI
+p = el("pattern", {id:"nai", width:"12", height:"12", patternUnits:"userSpaceOnUse", patternTransform:"rotate(45)"}, defs);
+el("path", {d:"M0 0v12", stroke:"#5c6f45", "stroke-width":"1", opacity:".5"}, p);
+// glow filter
+const flt = el("filter", {id:"glow", x:"-60%", y:"-60%", width:"220%", height:"220%"}, defs);
+el("feGaussianBlur", {stdDeviation:"3.2", result:"b"}, flt);
+const fm = el("feMerge", {}, flt);
+el("feMergeNode", {in:"b"}, fm); el("feMergeNode", {in:"SourceGraphic"}, fm);
+
+const world = el("g", {id:"world"}, svg);
+const LAYERS = {};
+["terrain","hydro","forest","roads","urban","grid","graphics","routes","rings","trails","effects","units","measure"]
+  .forEach(k => LAYERS[k] = el("g", {id:"L-" + k}, world));
+
+/* ---------------------------------------------------------- draw terrain */
+function drawTerrain() {
+  const T = LAYERS.terrain;
+  // sea
+  el("rect", {x:-6000, y:-6000, width:W + 12000, height:H + 12000, fill:"#06192a"}, T);
+  el("rect", {x:-6000, y:-6000, width:W + 12000, height:H + 12000, fill:"url(#seaLines)"}, T);
+  // shelf glow near coast
+  const coastPath = smooth(COAST);
+  el("path", {d:coastPath, fill:"none", stroke:"#0f4360", "stroke-width":58, opacity:".55"}, T);
+  el("path", {d:coastPath, fill:"none", stroke:"#155a7d", "stroke-width":22, opacity:".5"}, T);
+
+  // land mass
+  const land = `M-6000,-6000 L${COAST[0][0]},-6000 ` + smooth(COAST).slice(1) +
+               ` L${COAST[COAST.length-1][0]},${H+6000} L-6000,${H+6000} Z`;
+  el("path", {d:land, fill:"#141d17"}, T);
+  el("path", {d:smooth(COAST), fill:"none", stroke:"#3d5a52", "stroke-width":2.2}, T);
+
+  // elevation bands
+  HILLS.forEach(([cx, cy, rx, ry, spot, name], hi) => {
+    const jit = Array.from({length:22}, () => 0.78 + rnd() * 0.44);
+    [[1.0,"#1a2a1c"],[0.72,"#22351f"],[0.44,"#2c4124"],[0.2,"#374d29"]].forEach(([s, col], bi) => {
+      const pts = jit.map((j, i) => {
+        const a = i / jit.length * Math.PI * 2;
+        return [cx + Math.cos(a) * rx * s * j, cy + Math.sin(a) * ry * s * j];
+      });
+      el("path", {d:smooth(pts, true), fill:col, stroke:"#3a5236", "stroke-width":bi === 0 ? 1.1 : .8, "stroke-opacity":".5"}, T);
+    });
+    if (name) {
+      el("text", {x:cx, y:cy - 4, fill:"#6d8a6b", "font-size":22, "text-anchor":"middle",
+        "letter-spacing":"2", "font-family":"sans-serif"}, T).textContent = name;
+      el("text", {x:cx, y:cy + 20, fill:"#7fa07c", "font-size":19, "text-anchor":"middle",
+        "font-family":"monospace"}, T).textContent = "▲" + spot;
+    }
+  });
+
+  // forests
+  FORESTS.forEach(([x, y, w, h]) => {
+    const pts = Array.from({length:14}, (_, i) => {
+      const a = i / 14 * Math.PI * 2, j = 0.75 + rnd() * 0.5;
+      return [x + Math.cos(a) * w / 2 * j, y + Math.sin(a) * h / 2 * j];
+    });
+    el("path", {d:smooth(pts, true), fill:"url(#forest)", stroke:"#1f3a26", "stroke-width":1.2}, LAYERS.forest);
+  });
+
+  // rivers
+  RIVERS.forEach((r, i) => {
+    el("path", {d:smooth(r), fill:"none", stroke:"#1d5878", "stroke-width":i ? 8 : 11,
+      "stroke-linecap":"round", opacity:".95"}, LAYERS.hydro);
+    el("path", {d:smooth(r), fill:"none", stroke:"#2b7ea3", "stroke-width":i ? 3 : 4,
+      "stroke-linecap":"round", opacity:".7"}, LAYERS.hydro);
+  });
+  el("text", {x:1180, y:848, fill:"#3f7d97", "font-size":17, "font-style":"italic"}, LAYERS.hydro).textContent = "R. ASH";
+  el("text", {x:1760, y:1640, fill:"#3f7d97", "font-size":17, "font-style":"italic"}, LAYERS.hydro).textContent = "R. VELE";
+
+  // roads
+  ROADS.forEach(r => {
+    const d = smooth(r.p);
+    el("path", {d, fill:"none", stroke:"#0d1410", "stroke-width":r.w + 5, "stroke-linecap":"round"}, LAYERS.roads);
+    el("path", {d, fill:"none", stroke:"#5a5240", "stroke-width":r.w, "stroke-linecap":"round"}, LAYERS.roads);
+    el("path", {d, fill:"none", stroke:"#8a7d5e", "stroke-width":Math.max(1.4, r.w * .28),
+      "stroke-dasharray":"18 14", opacity:".65"}, LAYERS.roads);
+    if (r.n) {
+      const mid = r.p[Math.floor(r.p.length / 2)];
+      const t = el("text", {x:mid[0], y:mid[1] - 12, fill:"#9c8f6d", "font-size":16,
+        "text-anchor":"middle", "letter-spacing":"1.5"}, LAYERS.roads);
+      t.textContent = r.n;
+    }
+  });
+
+  // bridges where roads meet rivers (decorative)
+  [[1490,1400],[2135,1105],[2215,1560],[2160,1240]].forEach(([x, y]) => {
+    el("rect", {x:x - 13, y:y - 13, width:26, height:26, fill:"none", stroke:"#c9b98d",
+      "stroke-width":2.4, transform:`rotate(30 ${x} ${y})`}, LAYERS.roads);
+  });
+
+  // airfield
+  const af = el("g", {}, LAYERS.roads);
+  el("rect", {x:1560, y:1965, width:420, height:34, fill:"#3a3a3a", stroke:"#6d6d6d",
+    "stroke-width":1.5, transform:"rotate(-9 1770 1982)"}, af);
+  el("path", {d:"M1600 1982 H1940", stroke:"#b9b9b9", "stroke-width":2, "stroke-dasharray":"22 18",
+    transform:"rotate(-9 1770 1982)"}, af);
+  el("text", {x:1770, y:2035, fill:"#8b9aa5", "font-size":16, "text-anchor":"middle",
+    "letter-spacing":"2"}, af).textContent = "FARP HERON";
+
+  // urban
+  URBAN.forEach(u => {
+    const g = el("g", {}, LAYERS.urban);
+    el("rect", {x:u.x - u.w / 2, y:u.y - u.h / 2, width:u.w, height:u.h,
+      fill:"url(#urbanHatch)", stroke:"#4b535e", "stroke-width":1.4, opacity:".95"}, g);
+    // a few blocks for texture
+    for (let i = 0; i < (u.big ? 16 : 8); i++) {
+      const bw = 14 + rnd() * 26, bh = 10 + rnd() * 20;
+      el("rect", {x:u.x - u.w / 2 + rnd() * (u.w - bw), y:u.y - u.h / 2 + rnd() * (u.h - bh),
+        width:bw, height:bh, fill:"#39404a", opacity:".8"}, g);
+    }
+    el("text", {x:u.x, y:u.y - u.h / 2 - 9, fill:"#b9c6d2", "font-size":u.big ? 24 : 19,
+      "text-anchor":"middle", "letter-spacing":"2.5"}, g).textContent = u.n;
+  });
+
+  // port symbol
+  el("text", {x:2905, y:1005, fill:"#7fa9c4", "font-size":26, "text-anchor":"middle"}, LAYERS.urban).textContent = "⚓";
+  el("text", {x:3150, y:980, fill:"#3f7d97", "font-size":24, "letter-spacing":"5",
+    "font-style":"italic", "text-anchor":"middle"}, LAYERS.urban).textContent = "KESTREL BAY";
+  el("text", {x:3600, y:1900, fill:"#2f6d8a", "font-size":30, "letter-spacing":"9",
+    "font-style":"italic", "text-anchor":"middle"}, LAYERS.urban).textContent = "HALDEN SEA";
+}
+
+/* ------------------------------------------------------------- grid (1km) */
+function drawGrid() {
+  const G = LAYERS.grid;
+  for (let x = 0; x <= W; x += 100) {
+    el("path", {d:`M${x} 0V${H}`, stroke:"#5d7d8f", "stroke-width":x % 500 === 0 ? 1.1 : .5,
+      opacity:x % 500 === 0 ? .34 : .16}, G);
+    if (x % 500 === 0) el("text", {x:x + 5, y:20, fill:"#5d7d8f", "font-size":15,
+      "font-family":"monospace", opacity:".6"}, G).textContent = pad(40 + x / 100, 2);
+  }
+  for (let y = 0; y <= H; y += 100) {
+    el("path", {d:`M0 ${y}H${W}`, stroke:"#5d7d8f", "stroke-width":y % 500 === 0 ? 1.1 : .5,
+      opacity:y % 500 === 0 ? .34 : .16}, G);
+    if (y % 500 === 0) el("text", {x:6, y:y - 6, fill:"#5d7d8f", "font-size":15,
+      "font-family":"monospace", opacity:".6"}, G).textContent = pad(88 - y / 100, 2);
+  }
+}
+
+/* --------------------------------------------------- tactical graphics */
+function drawGraphics() {
+  const G = LAYERS.graphics;
+  // boundary (with echelon ticks)
+  el("path", {d:smooth(BOUNDARY), fill:"none", stroke:"#7fc3ff", "stroke-width":2.2,
+    "stroke-dasharray":"26 12", opacity:".7"}, G);
+  [400, 1400, 2400].forEach(bx => {
+    const by = 1245;
+    el("text", {x:bx, y:by - 8, fill:"#7fc3ff", "font-size":20, "text-anchor":"middle",
+      "letter-spacing":"1"}, G).textContent = "I I";
+  });
+
+  // FLOT
+  el("path", {d:smooth(FLOT), fill:"none", stroke:"#ffb63d", "stroke-width":2.6, opacity:".8"}, G);
+  el("text", {x:2050, y:2500, fill:"#ffb63d", "font-size":19, "letter-spacing":"3"}, G).textContent = "FLOT";
+
+  // phase lines
+  PHASELINES.forEach(pl => {
+    const pts = [];
+    for (let y = -40; y <= H + 40; y += 260) pts.push([pl.x + Math.sin(y / 420) * 42, y]);
+    el("path", {d:smooth(pts), fill:"none", stroke:"#9fb8cc", "stroke-width":2,
+      "stroke-dasharray":"3 12", "stroke-linecap":"round", opacity:".75"}, G);
+    [180, 1340, 2420].forEach(ly => {
+      el("text", {x:pl.x + 12, y:ly, fill:"#9fb8cc", "font-size":18, "letter-spacing":"2.5",
+        "font-family":"monospace"}, G).textContent = pl.n;
+    });
+  });
+
+  // objectives
+  OBJECTIVES.forEach(o => {
+    el("circle", {cx:o.x, cy:o.y, r:o.r, fill:"rgba(127,195,255,.05)", stroke:"#7fc3ff",
+      "stroke-width":2, "stroke-dasharray":"14 10"}, G);
+    el("text", {x:o.x, y:o.y - o.r - 10, fill:"#7fc3ff", "font-size":19, "text-anchor":"middle",
+      "letter-spacing":"2.5"}, G).textContent = o.n;
+  });
+
+  // NAI / TAI boxes
+  NAIS.forEach(nz => {
+    el("rect", {x:nz.x - nz.w / 2, y:nz.y - nz.h / 2, width:nz.w, height:nz.h,
+      fill:"url(#nai)", stroke:"#b9c96f", "stroke-width":1.8, "stroke-dasharray":"12 8", opacity:".85"}, G);
+    el("text", {x:nz.x, y:nz.y - nz.h / 2 - 9, fill:"#c8d97c", "font-size":18,
+      "text-anchor":"middle", "letter-spacing":"2"}, G).textContent = nz.n;
+  });
+
+  // axis of advance arrows (blue)
+  [[[1500,940],[1900,860],[2320,760],[2560,710]], [[1440,1290],[1820,1215],[2200,1145],[2440,1105]]]
+    .forEach(a => {
+      el("path", {d:smooth(a), fill:"none", stroke:"#5aa9ff", "stroke-width":10, opacity:".22"}, G);
+      const [x2, y2] = a[a.length - 1], [x1, y1] = a[a.length - 2];
+      const ang = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
+      el("path", {d:"M0,-13 L30,0 L0,13 Z", fill:"#5aa9ff", opacity:".3",
+        transform:`translate(${x2},${y2}) rotate(${ang})`}, G);
+    });
+}
+
+/* ==================================================== SYMBOLOGY RENDERING */
+const SID = {
+  F:{fill:"#7fc3ff", line:"#0a1b2b", txt:"#0a1b2b", label:"#a9d6ff"},
+  H:{fill:"#ff8d85", line:"#2b0a08", txt:"#2b0a08", label:"#ffb3ac"},
+  N:{fill:"#8ef0a8", line:"#07260f", txt:"#07260f", label:"#a9f5bd"},
+  U:{fill:"#ffe27a", line:"#2b2205", txt:"#2b2205", label:"#ffeda6"}
+};
+const ECH = {sqd:"•", plt:"•••", coy:"I", bn:"I I", bde:"X"};
+const TYPE_NAME = {
+  hq:"Headquarters", inf:"Infantry", mech:"Mechanised Infantry", armor:"Armour",
+  recon:"Reconnaissance", arty:"Field Artillery", mortar:"Mortar", eng:"Combat Engineer",
+  ad:"Air Defence", med:"Medical", sup:"Combat Service Support", rotary:"Attack Aviation",
+  uav:"Unmanned Aerial System", ship:"Surface Vessel"
+};
+
+function frameShape(sid) {
+  if (sid === "F") return ["rect", {x:-23, y:-16, width:46, height:32, rx:1.5}];
+  if (sid === "H") return ["path", {d:"M0,-23 L23,0 L0,23 L-23,0 Z"}];
+  if (sid === "N") return ["rect", {x:-19, y:-19, width:38, height:38}];
+  return ["path", {d:"M-13,-19 A10,10 0 0 1 13,-19 A10,10 0 0 1 19,0 A10,10 0 0 1 13,19 A10,10 0 0 1 -13,19 A10,10 0 0 1 -19,0 A10,10 0 0 1 -13,-19 Z"}];
+}
+
+function drawIcon(g, type, col) {
+  const S = {stroke:col, "stroke-width":2.1, fill:"none", "stroke-linecap":"round"};
+  switch (type) {
+    case "inf":  el("path", {d:"M-12,-8 L12,8 M12,-8 L-12,8", ...S}, g); break;
+    case "mech": el("ellipse", {cx:0, cy:0, rx:13, ry:8.5, ...S}, g);
+                 el("path", {d:"M-9,-6 L9,6 M9,-6 L-9,6", ...S}, g); break;
+    case "armor":el("ellipse", {cx:0, cy:0, rx:13, ry:8.5, ...S}, g); break;
+    case "recon":el("path", {d:"M-12,8 L12,-8", ...S}, g); break;
+    case "arty": el("circle", {cx:0, cy:0, r:5.2, fill:col, stroke:"none"}, g); break;
+    case "mortar":el("path", {d:"M0,9 L0,-9", ...S}, g);
+                 el("circle", {cx:0, cy:-9, r:3.6, fill:col, stroke:"none"}, g); break;
+    case "eng":  el("path", {d:"M-11,8 L-11,-3 L11,-3 L11,8 M-4,-3 L-4,-9 L4,-9 L4,-3", ...S}, g); break;
+    case "ad":   el("path", {d:"M-12,8 A12,12 0 0 1 12,8", ...S}, g); break;
+    case "med":  el("path", {d:"M0,-9 L0,9 M-9,0 L9,0", ...S, "stroke-width":2.8}, g); break;
+    case "sup":  el("path", {d:"M-11,7 L11,7 L11,-7 L-11,-7 Z M-11,-1 L11,-1", ...S, "stroke-width":1.8}, g); break;
+    case "hq":   el("path", {d:"M-9,-7 L-9,7 M-9,-7 L7,-7 L7,-1 L-9,-1", ...S}, g); break;
+    case "rotary":el("path", {d:"M-14,-4 Q0,-12 14,-4 M-14,5 Q0,13 14,5 M0,-4 L0,5", ...S, "stroke-width":1.9}, g); break;
+    case "uav":  el("path", {d:"M-14,0 L14,0 M-6,-7 L0,0 L6,-7 M0,0 L0,8", ...S, "stroke-width":1.9}, g); break;
+    case "ship": el("path", {d:"M-13,4 L13,4 L9,10 L-9,10 Z M0,4 L0,-9 M0,-9 L9,-4", ...S, "stroke-width":1.8}, g); break;
+  }
+}
+
+/* small standalone symbol used in the detail card */
+function symbolSVG(u) {
+  const s = document.createElementNS(svgNS, "svg");
+  s.setAttribute("viewBox", "-30 -26 60 52");
+  s.setAttribute("class", "sym");
+  const c = SID[u.sid];
+  const [tag, at] = frameShape(u.sid);
+  el(tag, {...at, fill:c.fill, stroke:c.line, "stroke-width":1.6}, s);
+  if (u.type === "hq") el("path", {d:"M-23,16 L-23,26", stroke:c.fill, "stroke-width":2.4}, s);
+  drawIcon(s, u.type, c.txt);
+  if (u.ech) el("text", {x:0, y:-22, fill:c.fill, "font-size":11, "text-anchor":"middle",
+    "letter-spacing":"1.5", "font-family":"monospace"}, s).textContent = ECH[u.ech];
+  return s;
+}
+
+/* ============================================================ SIM STATE */
+let units = [], events = [], effects = [], contacts = new Map();
+let simT = 0, timeScale = 4, selected = null, hovered = null;
+let contactActive = 0;
+const BASE = Date.UTC(2026, 7, 27, 6, 0, 0);
+
+function buildUnits() {
+  units = ROSTER.map(r => {
+    const u = {
+      ...r,
+      x:r.pos[0], y:r.pos[1], hx:r.pos[0], hy:r.pos[1],
+      hdg:90, spd:r.spd || 0, curSpd:0,
+      route:r.rt || null, seg:0, segT:0, dir:1, loop:r.loop || "once",
+      cp:100, ammo:88 + Math.floor(rnd() * 12), fuel:78 + Math.floor(rnd() * 22),
+      persMax:r.pers || 0, persNow:r.pers || 0,
+      trail:[[r.pos[0], r.pos[1]]], detected:r.sid === "F", lastSeen:0,
+      inContact:false, task:"", node:null, halted:false,
+      det:r.det === undefined ? 2500 : r.det, wpn:r.wpn || 0, ring:r.ring || 0,
+      fireCool:20 + rnd() * 60
+    };
+    u.task = defaultTask(u);
+    return u;
+  });
+}
+function defaultTask(u) {
+  if (u.sid === "H") return u.route ? "COUNTER-ATTACK WEST" : "DEFEND IN SECTOR";
+  if (u.sid === "N") return "TRANSIT — DECONFLICTED";
+  if (u.sid === "U") return "UNVERIFIED TRACK";
+  const map = {hq:"C2 — DISPLACE FWD", arty:"GS — RESPONSIVE FIRES", ad:"PROTECT BDE MAIN",
+    med:"ROLE 2 — ESTABLISHED", sup:"LOGPAC — RESUPPLY RUN", recon:"SCREEN FWD OF PL BRAVO",
+    rotary:"ARMED RECCE — ENGAGEMENT AREA", uav:"ISR ORBIT — NAI 03 / TAI 07",
+    eng:"MOBILITY — BREACH SUPPORT", mortar:"IDF SUPPORT 1-4 IN"};
+  return map[u.type] || "ADVANCE TO CONTACT";
+}
+
+/* ------------------------------------------------------------- movement */
+function advance(u, dt) {
+  if (!u.route || u.halted || u.cp <= 12) { u.curSpd = 0; return; }
+  let remain = (u.spd / 3.6) * dt / MPU;            // km/h -> map units/sec
+  u.curSpd = u.spd;
+  let guard = 0;
+  while (guard++ < 60) {
+    const a = u.route[u.seg], b = u.route[u.seg + u.dir];
+    if (!a) { u.seg = clamp(u.seg, 0, u.route.length - 1); u.dir = 1; continue; }
+    if (!b) {                                       // reached an end of the route
+      if (u.loop === "pingpong") { u.dir *= -1; continue; }
+      if (u.loop === "loop") { u.seg = 0; u.dir = 1; u.segT = 0; continue; }
+      u.curSpd = 0; u.halted = true;
+      u.x = a[0]; u.y = a[1];
+      return;
+    }
+    const segLen = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+    if (u.segT + remain / segLen >= 1) {            // roll over onto the next leg
+      remain -= (1 - u.segT) * segLen;
+      u.seg += u.dir; u.segT = 0;
+      u.x = b[0]; u.y = b[1];
+      u.hdg = (Math.atan2(b[0] - a[0], -(b[1] - a[1])) * 180 / Math.PI + 360) % 360;
+      if (remain <= 0) break;
+      continue;
+    }
+    u.segT += remain / segLen; remain = 0;
+    u.x = a[0] + (b[0] - a[0]) * u.segT;
+    u.y = a[1] + (b[1] - a[1]) * u.segT;
+    u.hdg = (Math.atan2(b[0] - a[0], -(b[1] - a[1])) * 180 / Math.PI + 360) % 360;
+    break;
+  }
+  // trail breadcrumbs every ~250 m of travel
+  const last = u.trail[u.trail.length - 1];
+  if (Math.hypot(u.x - last[0], u.y - last[1]) > 25) {
+    u.trail.push([u.x, u.y]);
+    if (u.trail.length > 46) u.trail.shift();
+  }
+}
+
+/* ------------------------------------------------- detection & contact */
+function sensorPass(dt) {
+  const friends = units.filter(u => u.sid === "F" && u.cp > 12);
+  const others = units.filter(u => u.sid !== "F");
+  others.forEach(o => {
+    let seen = false;
+    for (const f of friends) {
+      if (f.det > 0 && dist(f, o) < m2u(f.det)) { seen = true; break; }
+    }
+    if (seen) {
+      if (!o.detected) {
+        o.detected = true;
+        log(o.sid === "H" ? "crit" : "", `<b>SPOTREP</b> — ${o.sid === "H" ? "hostile" : o.sid === "N" ? "neutral" : "unknown"} track acquired: <b>${o.n}</b> vic ${gridRef(o.x, o.y)}`);
+      }
+      o.lastSeen = simT;
+    } else if (o.detected && simT - o.lastSeen > 180) {
+      o.detected = false;
+      if (o.sid === "H") log("warn", `<b>TRACK LOST</b> — ${o.n}, last known ${gridRef(o.x, o.y)}`);
+    }
+  });
+}
+
+function combatPass(dt) {
+  const fs = units.filter(u => u.sid === "F" && u.cp > 12 && ["mech","armor","inf","recon","rotary"].includes(u.type));
+  const hs = units.filter(u => u.sid === "H" && u.cp > 12 && ["mech","armor","inf","recon"].includes(u.type));
+  let active = 0;
+  units.forEach(u => u.inContact = false);
+  for (const f of fs) for (const h of hs) {
+    const d = dist(f, h);
+    const rng = m2u(Math.max(f.wpn || 2200, h.wpn || 2200));
+    if (d < rng) {
+      active++;
+      f.inContact = h.inContact = true;
+      const key = f.id + ">" + h.id;
+      if (!contacts.has(key)) {
+        contacts.set(key, simT);
+        log("crit", `<b>CONTACT</b> — ${f.n} in contact with ${h.n} vic ${gridRef((f.x + h.x) / 2, (f.y + h.y) / 2)}`);
+      }
+      const lethality = dt * 0.055;
+      const fAdv = (f.type === "armor" ? 1.35 : 1) * (f.type === "rotary" ? 1.9 : 1);
+      const hAdv = (h.type === "armor" ? 1.3 : 1) * (f.type === "rotary" ? 0.22 : 1)
+                 * (f.type === "recon" ? 0.5 : 1);
+      h.cp = Math.max(0, h.cp - lethality * fAdv);
+      f.cp = Math.max(0, f.cp - lethality * hAdv * 0.7);
+      f.ammo = Math.max(0, f.ammo - dt * 0.05);
+      h.ammo = Math.max(0, h.ammo - dt * 0.05);
+      if (rnd() < dt * 0.012) {
+        effects.push({x:(f.x + h.x) / 2 + (rnd() - .5) * 60, y:(f.y + h.y) / 2 + (rnd() - .5) * 60,
+          life:0, max:1.6, r:22, kind:"tracer"});
+      }
+      checkAttrition(h); checkAttrition(f);
+    }
+  }
+  contactActive = active;
+  $("#banner").classList.toggle("on", active > 0);
+  const th = $("#threat");
+  $("#threatTxt").textContent = active > 0 ? "THREAT: HIGH — TIC" : "THREAT: ELEVATED";
+  th.classList.toggle("high", active > 0);
+  th.querySelector(".dot").className = "dot " + (active > 0 ? "red" : "amber");
+}
+
+function checkAttrition(u) {
+  u.persNow = Math.round(u.persMax * (0.45 + 0.55 * u.cp / 100));
+  if (u.cp <= 12 && !u.halted) {
+    u.halted = true;
+    log(u.sid === "F" ? "crit" : "ok",
+      `<b>${u.n}</b> assessed COMBAT INEFFECTIVE — combat power ${Math.round(u.cp)}%, ${u.sid === "F" ? "withdrawing to consolidate" : "no longer a viable force"}`);
+  } else if (u.cp <= 45 && u.cp + 0.5 > 45) {
+    log("warn", `<b>${u.n}</b> combat power degraded below 45% — ${u.sid === "F" ? "request CASEVAC / LOGPAC" : "assessed attrited"}`);
+  }
+}
+
+/* ------------------------------------------------------------- indirect */
+function firesPass(dt) {
+  units.filter(u => (u.type === "arty" || u.type === "mortar") && u.cp > 12 && u.ammo > 4).forEach(g => {
+    g.fireCool -= dt;
+    if (g.fireCool > 0) return;
+    const hostileSide = g.sid === "F" ? "H" : "F";
+    const targets = units.filter(t => t.sid === hostileSide && t.cp > 12 && t.detected !== false
+      && dist(g, t) < m2u(g.wpn) && ["mech","armor","inf","recon","arty","ad","hq"].includes(t.type));
+    if (!targets.length) { g.fireCool = 25; return; }
+    const t = targets[Math.floor(rnd() * targets.length)];
+    g.fireCool = 95 + rnd() * 110;
+    g.ammo = Math.max(0, g.ammo - 4);
+    const rounds = 6 + Math.floor(rnd() * 12);
+    log(g.sid === "F" ? "" : "warn",
+      `<b>FIRE MISSION</b> — ${g.n} ${rounds} rds HE, target ${t.n} at ${gridRef(t.x, t.y)}`);
+    setTimeout(() => {
+      if (!t) return;
+      for (let i = 0; i < 5; i++) {
+        effects.push({x:t.x + (rnd() - .5) * 130, y:t.y + (rnd() - .5) * 130,
+          life:-i * 0.25, max:2.6, r:60, kind:"he"});
+      }
+      const dmg = 5 + rnd() * 9;
+      t.cp = Math.max(0, t.cp - dmg);
+      checkAttrition(t);
+      log(g.sid === "F" ? "ok" : "crit",
+        `<b>ROUNDS COMPLETE</b> — ${t.n} effects assessed, BDA −${Math.round(dmg)}% combat power`);
+    }, 900);
+  });
+}
+
+/* ---------------------------------------------------------- consumption */
+function logisticsPass(dt) {
+  units.forEach(u => {
+    if (u.curSpd > 0) u.fuel = Math.max(0, u.fuel - dt * (u.type === "rotary" ? 0.021 : 0.0035));
+    if (u.type === "sup" && u.sid === "F") {
+      units.filter(f => f.sid === "F" && dist(f, u) < m2u(1200)).forEach(f => {
+        f.fuel = Math.min(100, f.fuel + dt * 0.25);
+        f.ammo = Math.min(100, f.ammo + dt * 0.18);
+      });
+    }
+    if (u.type === "med" && u.sid === "F") {
+      units.filter(f => f.sid === "F" && dist(f, u) < m2u(1200) && f.cp < 100)
+        .forEach(f => { f.cp = Math.min(100, f.cp + dt * 0.05); });
+    }
+  });
+}
+
+/* ---------------------------------------------------------- scripted feed */
+const SCRIPT = [
+  [12,  "", "<b>FRAGO 04-2</b> issued — TF KESTREL to seize OBJ FALCON NLT 271200Z, be prepared to continue attack to OBJ RAVEN"],
+  [40,  "", "<b>1-7 CAV</b> crossed LD, reports no contact, moving on axis to PL AMBER"],
+  [95,  "warn", "<b>EW</b> — intermittent GPS degradation reported vic PL BRAVO, units advised to revert to terrain association"],
+  [150, "", "<b>HAWK 06</b> on station, ISR orbit established over NAI 03"],
+  [230, "warn", "<b>SIGINT CUE</b> — emitter consistent with SA-class SAM radiating vic 32SNK 6813, air corridor restricted east of PL CRIMSON"],
+  [320, "", "<b>ENG PLT</b> reports RTE VIPER trafficable to MLC 70 as far as PL BRAVO"],
+  [430, "warn", "<b>CIV</b> — IHRC convoy transiting MSR VIPER westbound, all callsigns deconflict and report passage"],
+  [560, "", "<b>LOGPAC</b> departed BSA, ETA to 1-4 IN CTCP 40 mins"],
+  [720, "crit", "<b>WARNO</b> — OPFOR 14 MRB assessed to be committing its second echelon; anticipate counter-attack vic OBJ TIGER"],
+  [900, "", "<b>MED</b> Role 2 at grid 32SNK 0951 accepting Priority 1 and 2 casualties, HLZ marked"],
+  [1150,"warn", "<b>ATO CHANGE</b> — CAS window shifted, next available 30 mins, request via BDE FSE"]
+];
+let scriptIdx = 0;
+
+/* ================================================================= UTIL */
+function gridRef(x, y) {
+  const e = Math.round((40000 + x * MPU) / 10);
+  const n = Math.round((88000 - y * MPU) / 10);
+  return `32SNK ${pad(e % 10000, 4)} ${pad(n % 10000, 4)}`;
+}
+function elevAt(x, y) {
+  let h = 40 + (1 - y / H) * 25;
+  HILLS.forEach(([cx, cy, rx, ry, spot]) => {
+    const d = Math.hypot((x - cx) / rx, (y - cy) / ry);
+    if (d < 1) h = Math.max(h, 60 + (spot - 60) * (1 - d) ** 1.5);
+  });
+  if (x > 3050) h = 0;
+  return Math.round(h);
+}
+function dtgString(t) {
+  const d = new Date(BASE + t * 1000);
+  const M = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"][d.getUTCMonth()];
+  return `${pad(d.getUTCDate(),2)}${pad(d.getUTCHours(),2)}${pad(d.getUTCMinutes(),2)}Z ${M} ${String(d.getUTCFullYear()).slice(2)}`;
+}
+function hhmm(t) {
+  const d = new Date(BASE + t * 1000);
+  return `${pad(d.getUTCHours(),2)}${pad(d.getUTCMinutes(),2)}Z`;
+}
+
+/* ------------------------------------------------------------------ log */
+function log(sev, html) {
+  events.unshift({t:simT, sev, html});
+  if (events.length > 220) events.pop();
+  renderLog();
+}
+let logDirty = true;
+function renderLog() { logDirty = true; }
+function flushLog() {
+  if (!logDirty) return;
+  logDirty = false;
+  const list = $("#logList");
+  list.innerHTML = events.slice(0, 90).map(e =>
+    `<div class="ent ${e.sev}"><time class="mono">${hhmm(e.t)}</time><div class="bd">${e.html}</div></div>`).join("");
+  $("#logCount").textContent = events.length + " ENTRIES";
+}
+
+/* ========================================================== MAP RENDERING */
+let k = 1, tx = 0, ty = 0;                    // world transform
+let showLabels = true;
+const layerState = {
+  terrain:true, hydro:true, forest:true, roads:true, urban:true, grid:true,
+  graphics:true, routes:true, rings:true, trails:true, units:true, godview:false
+};
+
+/* map labels are authored in world units; clamp their on-screen size so they
+   stay legible zoomed out and don't become billboards zoomed in */
+let worldLabels = [];
+function indexWorldLabels() {
+  worldLabels = [];
+  ["terrain","hydro","forest","roads","urban","grid","graphics"].forEach(key => {
+    LAYERS[key].querySelectorAll("text").forEach(t =>
+      worldLabels.push([t, parseFloat(t.getAttribute("font-size")) || 16]));
+  });
+}
+function scaleWorldLabels() {
+  worldLabels.forEach(([t, base]) => {
+    const px = clamp(base * k, 9.5, 20);
+    t.setAttribute("font-size", (px / k).toFixed(2));
+    t.setAttribute("opacity", k < 0.16 ? 0 : 1);
+  });
+}
+
+function applyTransform() {
+  world.setAttribute("transform", `translate(${tx.toFixed(2)},${ty.toFixed(2)}) scale(${k.toFixed(4)})`);
+  units.forEach(u => { if (u.node) u.node.setAttribute("transform", nodeTransform(u)); });
+  scaleWorldLabels();
+  updateScaleBar();
+  $("#sbZoom").textContent = Math.round(k * 100) + "%";
+}
+const SYM = 0.82;   // symbols hold a constant on-screen size regardless of zoom
+const nodeTransform = u => `translate(${u.x.toFixed(1)},${u.y.toFixed(1)}) scale(${(SYM / k).toFixed(4)})`;
+
+function fit() {
+  const r = svg.getBoundingClientRect();
+  k = Math.min(r.width / (W * 1.02), r.height / (H * 1.02));
+  tx = (r.width - W * k) / 2; ty = (r.height - H * k) / 2;
+  applyTransform();
+}
+function zoomAt(px, py, factor) {
+  const nk = clamp(k * factor, 0.12, 4.5);
+  factor = nk / k;
+  tx = px - (px - tx) * factor; ty = py - (py - ty) * factor; k = nk;
+  applyTransform();
+}
+function updateScaleBar() {
+  const target = 120;                       // px
+  const km = target / (k * 100);            // 100 map units = 1 km
+  const nice = [0.25,0.5,1,2,5,10,20,50].reduce((a, b) => Math.abs(b - km) < Math.abs(a - km) ? b : a);
+  $("#scalebar .bar").style.width = (nice * 100 * k) + "px";
+  $("#scalebar .lbl").textContent = nice < 1 ? (nice * 1000) + " m" : nice + " km";
+}
+const screenToWorld = (sx, sy) => ({x:(sx - tx) / k, y:(sy - ty) / k});
+
+/* ------------------------------------------------------- routes & rings */
+function drawRoutesAndRings() {
+  LAYERS.routes.innerHTML = ""; LAYERS.rings.innerHTML = "";
+  units.forEach(u => {
+    if (u.route && (u.sid === "F" || u.detected)) {
+      el("path", {d:smooth(u.route), fill:"none",
+        stroke:SID[u.sid].fill, "stroke-width":1.4, "stroke-dasharray":"7 9",
+        opacity:u.sid === "F" ? .32 : .22, "vector-effect":"non-scaling-stroke"}, LAYERS.routes);
+      u.route.forEach(([x, y]) => el("circle", {cx:x, cy:y, r:3.5, fill:SID[u.sid].fill,
+        opacity:.32}, LAYERS.routes));
+    }
+    if (u.ring) {
+      const g = el("g", {}, LAYERS.rings);
+      const col = u.sid === "H" ? "#ff5a4d" : "#5aa9ff";
+      el("circle", {cx:u.x, cy:u.y, r:m2u(u.ring), fill:u.sid === "H" ? "rgba(255,90,77,.05)" : "rgba(90,169,255,.05)",
+        stroke:col, "stroke-width":1.6, "stroke-dasharray":"16 10", opacity:.6}, g);
+      el("text", {x:u.x, y:u.y - m2u(u.ring) - 10, fill:col, "font-size":(clamp(17 * k, 9.5, 18) / k).toFixed(2),
+        "text-anchor":"middle", "letter-spacing":"1.5"}, g).textContent =
+          (u.sid === "H" ? "THREAT RING " : "AD COVERAGE ") + (u.ring / 1000) + "KM";
+    }
+    if (u.wpn && u.type === "arty") {
+      el("circle", {cx:u.x, cy:u.y, r:m2u(u.wpn), fill:"none", stroke:SID[u.sid].fill,
+        "stroke-width":1, "stroke-dasharray":"3 12", opacity:.28}, LAYERS.rings);
+    }
+  });
+}
+
+/* ---------------------------------------------------------- unit symbols */
+function buildUnitNodes() {
+  LAYERS.units.innerHTML = ""; LAYERS.trails.innerHTML = "";
+  units.forEach(u => {
+    const g = el("g", {class:"unit", "data-id":u.id}, LAYERS.units);
+    g.style.cursor = "pointer";
+    const c = SID[u.sid];
+
+    u.selRing = el("path", {d:"M-34,-24 L-34,-30 L-28,-30 M28,-30 L34,-30 L34,-24 M34,24 L34,30 L28,30 M-28,30 L-34,30 L-34,24",
+      fill:"none", stroke:"#39e0d0", "stroke-width":2.4, opacity:0}, g);
+
+    // direction of movement leader
+    u.leader = el("path", {d:"M0,0 L0,-40", stroke:c.fill, "stroke-width":2, opacity:.9}, g);
+    u.leaderHead = el("path", {d:"M0,-40 L-4,-32 M0,-40 L4,-32", stroke:c.fill, "stroke-width":2, fill:"none", opacity:.9}, g);
+
+    const [tag, at] = frameShape(u.sid);
+    u.frame = el(tag, {...at, fill:c.fill, stroke:c.line, "stroke-width":1.5}, g);
+    if (u.type === "hq") el("path", {d:"M-23,16 L-23,40", stroke:c.fill, "stroke-width":2.6}, g);
+    drawIcon(g, u.type, c.txt);
+
+    if (u.ech) el("text", {x:0, y:-22, fill:c.fill, "font-size":11.5, "text-anchor":"middle",
+      "letter-spacing":"1.6", "font-family":"monospace"}, g).textContent = ECH[u.ech];
+
+    const halo = {stroke:"#05090e", "stroke-width":3, "paint-order":"stroke",
+      "stroke-linejoin":"round", "stroke-opacity":".85"};
+    u.lbl = el("text", {x:37, y:-4, fill:c.label, "font-size":12, "letter-spacing":".4",
+      "font-family":"sans-serif", ...halo}, g);
+    u.lbl.textContent = u.n;
+    u.lbl2 = el("text", {x:37, y:8, fill:"#8fa5b8", "font-size":9.5, "font-family":"monospace",
+      ...halo, "stroke-width":2.6}, g);
+
+    // combat power bar
+    el("rect", {x:-23, y:20, width:46, height:4, fill:"#0a1017", stroke:"#0a1017"}, g);
+    u.cpBar = el("rect", {x:-22.5, y:20.5, width:45, height:3, fill:"#5ede7a"}, g);
+
+    u.contactMk = el("circle", {cx:0, cy:0, r:30, fill:"none", stroke:"#ff5a4d",
+      "stroke-width":2.5, opacity:0}, g);
+
+    u.trailNode = el("polyline", {fill:"none", stroke:c.fill, "stroke-width":1.4,
+      opacity:.34, "vector-effect":"non-scaling-stroke", "stroke-dasharray":"2 5"}, LAYERS.trails);
+
+    g.addEventListener("mousedown", e => e.stopPropagation());
+    g.addEventListener("click", e => { e.stopPropagation(); select(u.id); });
+    g.addEventListener("mouseenter", () => { hovered = u; });
+    g.addEventListener("mouseleave", () => { hovered = null; $("#tooltip").style.display = "none"; });
+
+    u.node = g;
+    g.setAttribute("transform", nodeTransform(u));
+  });
+}
+
+function refreshUnitVisuals() {
+  units.forEach(u => {
+    if (!u.node) return;
+    const visible = u.sid === "F" || u.detected || layerState.godview;
+    u.node.style.display = visible ? "" : "none";
+    u.trailNode.style.display = (visible && layerState.trails) ? "" : "none";
+    if (!visible) return;
+
+    u.node.setAttribute("transform", nodeTransform(u));
+    // stale (not currently held) tracks drawn dashed
+    const stale = !u.detected && u.sid !== "F";
+    u.frame.setAttribute("stroke-dasharray", stale ? "5 4" : "none");
+    u.frame.setAttribute("opacity", stale ? .45 : 1);
+
+    // movement leader
+    const moving = u.curSpd > 0.5;
+    const len = clamp(26 + u.curSpd * 0.18, 34, 72);
+    u.leader.setAttribute("d", `M0,0 L0,${-len}`);
+    u.leader.setAttribute("transform", `rotate(${u.hdg.toFixed(1)})`);
+    u.leaderHead.setAttribute("d", `M0,${-len} L-5,${-len + 9} M0,${-len} L5,${-len + 9}`);
+    u.leaderHead.setAttribute("transform", `rotate(${u.hdg.toFixed(1)})`);
+    u.leader.setAttribute("opacity", moving ? .9 : 0);
+    u.leaderHead.setAttribute("opacity", moving ? .9 : 0);
+
+    // labels
+    const show = showLabels && (k > 0.2 || selected === u.id);
+    u.lbl.setAttribute("opacity", show ? 1 : 0);
+    u.lbl2.setAttribute("opacity", (show && (k > 0.3 || selected === u.id)) ? 1 : 0);
+    u.lbl2.textContent = moving ? `${Math.round(u.curSpd)} KM/H  ${pad(u.hdg,3)}°` : (u.halted ? "STATIC" : "HALT");
+
+    // combat power
+    const w = 45 * clamp(u.cp, 0, 100) / 100;
+    u.cpBar.setAttribute("width", w.toFixed(1));
+    u.cpBar.setAttribute("fill", u.cp > 65 ? "#5ede7a" : u.cp > 35 ? "#ffb63d" : "#ff5a4d");
+
+    // contact pulse
+    if (u.inContact) {
+      const ph = (performance.now() % 900) / 900;
+      u.contactMk.setAttribute("opacity", (1 - ph) * .9);
+      u.contactMk.setAttribute("r", 26 + ph * 20);
+    } else u.contactMk.setAttribute("opacity", 0);
+
+    u.selRing.setAttribute("opacity", selected === u.id ? 1 : 0);
+
+    // trail
+    if (layerState.trails && u.trail.length > 1) {
+      u.trailNode.setAttribute("points", u.trail.map(p => p[0].toFixed(0) + "," + p[1].toFixed(0)).join(" "));
+    }
+  });
+}
+
+/* ------------------------------------------------------------- effects */
+function renderEffects(dtReal) {
+  const E = LAYERS.effects;
+  E.innerHTML = "";
+  effects.forEach(f => {
+    f.life += dtReal;
+    if (f.life < 0) return;
+    const p = f.life / f.max;
+    if (p > 1) return;
+    if (f.kind === "he") {
+      el("circle", {cx:f.x, cy:f.y, r:f.r * (0.25 + p * 1.0), fill:"none",
+        stroke:"#ffb63d", "stroke-width":3 * (1 - p) + .5, opacity:(1 - p) * .95}, E);
+      el("circle", {cx:f.x, cy:f.y, r:f.r * 0.45 * (1 - p), fill:"#ff9a3d", opacity:(1 - p) * .8,
+        filter:"url(#glow)"}, E);
+    } else {
+      el("circle", {cx:f.x, cy:f.y, r:f.r * (0.3 + p), fill:"none", stroke:"#ff5a4d",
+        "stroke-width":1.6, opacity:(1 - p) * .8}, E);
+    }
+  });
+  effects = effects.filter(f => f.life < f.max);
+}
+
+/* =============================================================== PANELS */
+function renderOrbat() {
+  const groups = [];
+  units.forEach(u => {
+    let g = groups.find(g => g.n === u.grp);
+    if (!g) groups.push(g = {n:u.grp, sid:u.sid, us:[]});
+    g.us.push(u);
+  });
+  $("#orbatList").innerHTML = groups.map(g => {
+    const cls = g.sid === "F" ? "f" : g.sid === "H" ? "h" : "n";
+    return `<div class="grp ${cls}">${g.n}</div>` + g.us.map(u => {
+      const c = SID[u.sid];
+      const stat = u.cp > 65 ? ["ok", "GRN"] : u.cp > 35 ? ["deg", "AMB"] : u.cp > 12 ? ["bad", "RED"] : ["bad", "BLK"];
+      const undet = (u.sid !== "F" && !u.detected) ? " undet" : "";
+      return `<div class="row${undet}${u.cp <= 12 ? " dead" : ""}${selected === u.id ? " sel" : ""}" data-id="${u.id}">
+        <span class="sq" style="background:${c.fill}${u.sid === "H" ? ";transform:rotate(45deg) scale(.85)" : ""}${u.sid === "U" ? ";border-radius:50%" : ""}"></span>
+        <span class="nm">${u.n}</span><span class="st ${stat[0]}">${stat[1]}</span></div>`;
+    }).join("");
+  }).join("");
+  $("#obCount").textContent = units.filter(u => u.sid === "F").length + " BLUE / " +
+    units.filter(u => u.sid === "H").length + " RED";
+  $("#orbatList").querySelectorAll(".row").forEach(r =>
+    r.addEventListener("click", () => { select(r.dataset.id, true); }));
+}
+let orbatDirty = true;
+setInterval(() => { if (orbatDirty) { renderOrbat(); orbatDirty = false; } }, 900);
+
+function renderLayers() {
+  const items = [
+    ["units","Unit symbols"],["trails","Track history"],["routes","Planned routes"],
+    ["rings","Threat / coverage rings"],["graphics","Control measures"],["grid","Grid (1 km)"],
+    ["roads","Roads &amp; infrastructure"],["urban","Built-up areas"],["forest","Vegetation"],
+    ["hydro","Hydrography"],["godview","Show undetected (god view)"]
+  ];
+  $("#layerList").innerHTML = items.map(([id, lbl]) =>
+    `<div class="lyr ${layerState[id] ? "on" : ""}" data-l="${id}"><i></i>${lbl}</div>`).join("");
+  $("#layerList").querySelectorAll(".lyr").forEach(n => n.addEventListener("click", () => {
+    const id = n.dataset.l;
+    layerState[id] = !layerState[id];
+    n.classList.toggle("on", layerState[id]);
+    applyLayerVisibility();
+  }));
+}
+function applyLayerVisibility() {
+  ["terrain","hydro","forest","roads","urban","grid","graphics","routes","rings","trails","units"]
+    .forEach(key => { if (LAYERS[key]) LAYERS[key].style.display = layerState[key] === false ? "none" : ""; });
+  refreshUnitVisuals();
+}
+
+function renderDetail() {
+  const u = units.find(x => x.id === selected);
+  const body = $("#detailBody");
+  if (!u) {
+    body.innerHTML = `<div class="empty">No track selected.<br><br>Select a symbol on the map or a unit in the order of battle to view its status, holdings and current tasking.</div>`;
+    return;
+  }
+  const stat = u.cp > 65 ? ["OPERATIONAL","ok"] : u.cp > 35 ? ["DEGRADED","amber"] : u.cp > 12 ? ["ATTRITED","red"] : ["COMBAT INEFFECTIVE","red"];
+  const side = {F:"FRIENDLY", H:"HOSTILE", N:"NEUTRAL", U:"UNKNOWN"}[u.sid];
+  body.innerHTML = `<div class="card">
+    <div class="hd"><div class="symholder"></div>
+      <div class="ttl"><b>${u.n}</b><small>${side} · ${TYPE_NAME[u.type] || ""}</small></div></div>
+    <table class="f">
+      <tr><td>STATUS</td><td style="color:${stat[1] === "ok" ? "#5ede7a" : stat[1] === "amber" ? "#ffb63d" : "#ff5a4d"}">${stat[0]}</td></tr>
+      <tr><td>LOCATION</td><td class="mono">${gridRef(u.x, u.y)}</td></tr>
+      <tr><td>ELEVATION</td><td class="mono">${elevAt(u.x, u.y)} m</td></tr>
+      <tr><td>SPEED / HDG</td><td class="mono">${Math.round(u.curSpd)} km/h · ${pad(u.hdg,3)}°</td></tr>
+      <tr><td>PERSONNEL</td><td class="mono">${u.persNow} / ${u.persMax}</td></tr>
+      <tr><td>SENSOR RNG</td><td class="mono">${u.det ? (u.det / 1000).toFixed(1) + " km" : "—"}</td></tr>
+      <tr><td>TRACK AGE</td><td class="mono">${u.sid === "F" ? "LIVE (BFT)" : u.detected ? Math.round(simT - u.lastSeen) + " s" : "STALE"}</td></tr>
+    </table>
+    <div class="metric"><label>COMBAT POWER <b>${Math.round(u.cp)}%</b></label>
+      <div class="bar"><i class="${u.cp > 65 ? "" : u.cp > 35 ? "amber" : "red"}" style="width:${clamp(u.cp,0,100)}%"></i></div></div>
+    <div class="metric"><label>AMMUNITION <b>${Math.round(u.ammo)}%</b></label>
+      <div class="bar"><i class="${u.ammo > 50 ? "" : u.ammo > 25 ? "amber" : "red"}" style="width:${clamp(u.ammo,0,100)}%"></i></div></div>
+    <div class="metric"><label>FUEL <b>${Math.round(u.fuel)}%</b></label>
+      <div class="bar"><i class="${u.fuel > 50 ? "" : u.fuel > 25 ? "amber" : "red"}" style="width:${clamp(u.fuel,0,100)}%"></i></div></div>
+    <div style="margin-top:10px;padding:7px 8px;background:#0f1720;border-left:2px solid #39e0d0">
+      <div style="font-size:9px;letter-spacing:.18em;color:#647a8d">CURRENT TASK</div>
+      <div style="font-size:11px;color:#cfdeeb;margin-top:2px">${u.task}</div>
+    </div>
+    ${u.inContact ? `<div style="margin-top:7px;padding:6px 8px;background:rgba(255,90,77,.1);border-left:2px solid #ff5a4d;color:#ffb0a8;font-size:11px;letter-spacing:.1em">TROOPS IN CONTACT</div>` : ""}
+  </div>`;
+  body.querySelector(".symholder").replaceWith(symbolSVG(u));
+}
+
+function select(id, center) {
+  selected = id;
+  renderDetail(); orbatDirty = true; renderOrbat();
+  if (center) {
+    const u = units.find(x => x.id === id);
+    if (u) {
+      const r = svg.getBoundingClientRect();
+      tx = r.width / 2 - u.x * k; ty = r.height / 2 - u.y * k;
+      applyTransform();
+    }
+  }
+}
+
+/* ============================================================ INTERACTION */
+let dragging = false, dragStart = null, moved = false;
+let measureMode = false, mp1 = null, mp2 = null;
+
+svg.addEventListener("mousedown", e => {
+  if (measureMode) return;
+  dragging = true; moved = false;
+  dragStart = {x:e.clientX - tx, y:e.clientY - ty};
+  svg.classList.add("pan");
+});
+window.addEventListener("mouseup", () => { dragging = false; svg.classList.remove("pan"); });
+window.addEventListener("mousemove", e => {
+  const r = svg.getBoundingClientRect();
+  const sx = e.clientX - r.left, sy = e.clientY - r.top;
+  if (dragging) {
+    tx = e.clientX - dragStart.x; ty = e.clientY - dragStart.y;
+    moved = true; applyTransform();
+  }
+  if (sx >= 0 && sy >= 0 && sx < r.width && sy < r.height) {
+    const w = screenToWorld(sx, sy);
+    $("#sbGrid").textContent = gridRef(w.x, w.y);
+    $("#sbElev").textContent = elevAt(w.x, w.y) + " m";
+    if (measureMode && mp1 && !mp2) drawMeasure(mp1, w);
+  }
+  // tooltip
+  const tt = $("#tooltip");
+  if (hovered && !dragging) {
+    tt.style.display = "block";
+    tt.style.left = (sx + 16) + "px";
+    tt.style.top = (sy + 14) + "px";
+    tt.innerHTML = `<b style="color:${SID[hovered.sid].label}">${hovered.n}</b><br>` +
+      `<span class="mono" style="color:#8fa5b8">${gridRef(hovered.x, hovered.y)} · CP ${Math.round(hovered.cp)}%` +
+      (hovered.curSpd > 0.5 ? ` · ${Math.round(hovered.curSpd)} km/h` : "") + `</span>`;
+  } else tt.style.display = "none";
+});
+svg.addEventListener("wheel", e => {
+  e.preventDefault();
+  const r = svg.getBoundingClientRect();
+  zoomAt(e.clientX - r.left, e.clientY - r.top, e.deltaY < 0 ? 1.16 : 1 / 1.16);
+}, {passive:false});
+svg.addEventListener("click", e => {
+  const r = svg.getBoundingClientRect();
+  const w = screenToWorld(e.clientX - r.left, e.clientY - r.top);
+  if (measureMode) {
+    if (!mp1) { mp1 = w; mp2 = null; }
+    else if (!mp2) { mp2 = w; drawMeasure(mp1, mp2); }
+    else { mp1 = w; mp2 = null; LAYERS.measure.innerHTML = ""; $("#sbMeasure").textContent = ""; }
+    return;
+  }
+  if (!moved) { selected = null; renderDetail(); orbatDirty = true; }
+});
+
+function drawMeasure(a, b) {
+  LAYERS.measure.innerHTML = "";
+  const d = dist(a, b) * MPU;
+  const brg = (Math.atan2(b.x - a.x, -(b.y - a.y)) * 180 / Math.PI + 360) % 360;
+  el("path", {d:`M${a.x} ${a.y} L${b.x} ${b.y}`, stroke:"#39e0d0", "stroke-width":1.6,
+    "stroke-dasharray":"8 6", "vector-effect":"non-scaling-stroke"}, LAYERS.measure);
+  [a, b].forEach(p => el("path", {d:`M${p.x - 10} ${p.y} h20 M${p.x} ${p.y - 10} v20`,
+    stroke:"#39e0d0", "stroke-width":1.4, "vector-effect":"non-scaling-stroke"}, LAYERS.measure));
+  const mid = {x:(a.x + b.x) / 2, y:(a.y + b.y) / 2};
+  const t = el("text", {x:mid.x, y:mid.y - 12 / k, fill:"#39e0d0",
+    "font-size":15 / k, "text-anchor":"middle", "font-family":"monospace"}, LAYERS.measure);
+  t.textContent = `${(d / 1000).toFixed(2)} km / ${Math.round(brg)}° / ${Math.round(brg * 17.7778)} mils`;
+  $("#sbMeasure").textContent = `RANGE ${(d / 1000).toFixed(2)} km · BRG ${pad(brg,3)}° · ${Math.round(brg * 17.7778)} mils`;
+}
+
+$("#tZoomIn").onclick = () => { const r = svg.getBoundingClientRect(); zoomAt(r.width / 2, r.height / 2, 1.3); };
+$("#tZoomOut").onclick = () => { const r = svg.getBoundingClientRect(); zoomAt(r.width / 2, r.height / 2, 1 / 1.3); };
+$("#tFit").onclick = fit;
+$("#tLabels").onclick = () => { showLabels = !showLabels; $("#tLabels").classList.toggle("on", !showLabels); };
+$("#tLegend").onclick = () => { $("#legendbox").classList.toggle("on"); $("#tLegend").classList.toggle("on"); };
+$("#tMeasure").onclick = () => {
+  measureMode = !measureMode;
+  $("#tMeasure").classList.toggle("on", measureMode);
+  svg.classList.toggle("measure", measureMode);
+  if (!measureMode) { mp1 = mp2 = null; LAYERS.measure.innerHTML = ""; $("#sbMeasure").textContent = ""; }
+};
+document.querySelectorAll("[data-ts]").forEach(b => b.onclick = () => {
+  document.querySelectorAll("[data-ts]").forEach(x => x.classList.remove("on"));
+  b.classList.add("on");
+  timeScale = +b.dataset.ts;
+  $("#tsLabel").textContent = timeScale === 0 ? "PAUSED" : "× " + timeScale;
+});
+$("#btnReset").onclick = () => startScenario();
+window.addEventListener("resize", () => { applyTransform(); });
+window.addEventListener("keydown", e => {
+  if (e.key === " ") { e.preventDefault();
+    const b = document.querySelector(timeScale === 0 ? '[data-ts="4"]' : '[data-ts="0"]'); b.click(); }
+  if (e.key === "Escape" && measureMode) $("#tMeasure").click();
+});
+
+/* ================================================================ LOOP */
+let lastT = performance.now(), acc = 0;
+function frame(now) {
+  const dtReal = Math.min(0.1, (now - lastT) / 1000);
+  lastT = now;
+  const dtSim = dtReal * timeScale;
+
+  if (timeScale > 0) {
+    acc += dtSim;
+    // fixed-step the simulation for stability at high compression
+    let steps = 0;
+    while (acc > 0.5 && steps++ < 240) {
+      const s = 0.5;
+      simT += s;
+      units.forEach(u => advance(u, s));
+      acc -= s;
+    }
+    sensorPass(dtSim);
+    combatPass(dtSim);
+    firesPass(dtSim);
+    logisticsPass(dtSim);
+    while (scriptIdx < SCRIPT.length && simT >= SCRIPT[scriptIdx][0]) {
+      const [, sev, txt] = SCRIPT[scriptIdx++];
+      log(sev, txt);
+    }
+    orbatDirty = true;
+  }
+
+  refreshUnitVisuals();
+  renderEffects(dtReal);
+  if (Math.floor(now / 600) !== frame._tick) {
+    frame._tick = Math.floor(now / 600);
+    drawRoutesAndRings();
+    if (selected) renderDetail();
+    $("#dtg b").textContent = dtgString(simT);
+    const live = units.filter(u => u.sid === "F" && u.cp > 12).length;
+    const en = units.filter(u => u.sid === "H" && u.detected && u.cp > 12).length;
+    $("#sbTracks").textContent = `${live} BLUE · ${en} RED HELD · ${contactActive} TIC`;
+  }
+  flushLog();
+  requestAnimationFrame(frame);
+}
+
+/* ============================================================== STARTUP */
+function startScenario() {
+  _seed = 20260827;
+  simT = 0; scriptIdx = 0; events = []; effects = []; contacts = new Map(); selected = null;
+  buildUnits();
+  buildUnitNodes();
+  drawRoutesAndRings();
+  renderOrbat(); renderDetail(); applyLayerVisibility();
+  log("", "<b>SCENARIO INITIALISED</b> — TF KESTREL COP synchronised, 17 blue tracks reporting via BFT");
+  log("", "<b>INTSUM</b> — 14 MRB assessed defending vic PORT HALDEN with one MR bn forward and armour in reserve");
+  applyTransform();
+  select("A17");
+}
+
+drawTerrain();
+drawGrid();
+drawGraphics();
+indexWorldLabels();
+renderLayers();
+startScenario();
+fit();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
